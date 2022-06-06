@@ -1,22 +1,23 @@
 import XCTest
 @testable import Flows
+import System
 
 final class FlowsTests: XCTestCase {
     func testFlow() throws {
         let model = Model()
         
-        model.add(Container(name: "a", value: 100))
-        model.add(Container(name: "b", value: 0))
-        model.add(Container(name: "c", value: 0))
+        model.add(Container(name: "a", float: 100))
+        model.add(Container(name: "b", float: 0))
+        model.add(Container(name: "c", float: 0))
 
-        model.add(Flow(name: "f1") { _ in 1 })
-        model.add(Flow(name: "f2") { _ in 2 })
+        model.add(Flow(name: "f1", expression: "1"))
+        model.add(Flow(name: "f2", expression: "2"))
 
-        model.connect(model["f1"] as! Flow, from: model["a"] as! Container)
-        model.connect(model["f1"] as! Flow, to: model["b"] as! Container)
+        model.connect(from: model["a"]!, to: model["f1"]!, as: .flow)
+        model.connect(from: model["f1"]!, to: model["b"]!, as: .flow)
 
-        model.connect(model["f2"] as! Flow, from: model["a"] as! Container)
-        model.connect(model["f2"] as! Flow, to: model["c"] as! Container)
+        model.connect(from: model["a"]!, to: model["f2"]!, as: .flow)
+        model.connect(from: model["f2"]!, to: model["c"]!, as: .flow)
 
         let simulator = Simulator(model: model)
 
@@ -35,16 +36,16 @@ final class FlowsTests: XCTestCase {
     
     func testParameter() throws {
         let model = Model()
-        model.add(Container(name: "a", value: 100))
-        model.add(Container(name: "b", value: 0))
+        model.add(Container(name: "a", float: 100))
+        model.add(Container(name: "b", float: 0))
 
-        model.add(Formula(name: "x") { _ in 2 } )
+        model.add(Transform(name: "x", expression: "2" ))
 
-        model.add(Flow(name: "f") { $0["x"]! })
-        model.connect(model["f"] as! Flow, from: model["a"] as! Container)
-        model.connect(model["f"] as! Flow, to: model["b"] as! Container)
+        model.add(Flow(name: "f", expression: "x"))
+        model.connect(from: model["a"]!, to: model["f"]!, as: .flow)
+        model.connect(from: model["f"]!, to: model["b"]!, as: .flow)
 
-        model.connect(from: model["x"]!, to: model["f"]!)
+        model.connect(from: model["x"]!, to: model["f"]!, as: .flow)
         
         let simulator = Simulator(model: model)
 

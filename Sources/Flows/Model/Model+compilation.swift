@@ -25,10 +25,10 @@ extension Model {
 
         // S ← Set of all nodes with no incoming edge
         var sources: [Node] = self.nodes.filter {
-            incoming($0).isEmpty
+            parameters($0).isEmpty
         }
 
-        var links = self.links
+        var links = self.parameterLinks
         
         //
         //while S is not empty do
@@ -86,7 +86,8 @@ extension Model {
         // Check for same input/output of flows
         //
         let errors: [ModelError] = flows.filter { flow in
-            flow.origin === flow.target
+            let node = drainedBy(flow)
+            return node != nil && drainedBy(flow) === filledBy(flow)
         }.map { flow in
             .sameFlowInputOutput(flow)
         }

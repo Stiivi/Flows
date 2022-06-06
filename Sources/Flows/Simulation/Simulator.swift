@@ -7,15 +7,6 @@
 
 
 /// Simulation state
-public class SimulationState {
-    var values: [String:Float] = [:]
-    
-    public subscript(name: String) -> Float? {
-        get {
-            return values[name]
-        }
-    }
-}
 
 public class Simulator {
     public let model: Model
@@ -24,7 +15,7 @@ public class Simulator {
     
     var last: SimulationState? { history.last }
     
-    init(model: Model) {
+    public init(model: Model) {
         self.model = model
         do {
             try self.compiledModel = model.compile()
@@ -37,7 +28,7 @@ public class Simulator {
     /// Runs the simulation for given number of steps and return last state
     /// of the simulation.
     ///
-    func run(steps: Int) -> SimulationState {
+    public func run(steps: Int) -> SimulationState {
         guard steps > 0 else {
             fatalError("Number of simulation steps should be > 0")
         }

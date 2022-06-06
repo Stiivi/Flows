@@ -32,10 +32,12 @@ final class ModelTests: XCTestCase {
 
     func testAddFlow() throws {
         let model = Model()
-        let node = Flow(name: "f", expression: "0")
-        model.add(node)
+        let flow = Flow(name: "f", expression: "0")
+        model.add(flow)
         
-        XCTAssertIdentical(model.flows.first, node)
+        XCTAssertIdentical(model.flows.first, flow)
+        XCTAssertNil(model.drainedBy(flow))
+        XCTAssertNil(model.filledBy(flow))
     }
 
     func testConnectFlow() throws {
@@ -48,14 +50,18 @@ final class ModelTests: XCTestCase {
         model.add(output)
         model.add(flow)
 
-        model.connect(flow, from: input)
-        model.connect(flow, to: output)
+        model.connect(from: input, to: flow, as: .flow)
+        model.connect(from: flow, to: output, as: .flow)
         
         XCTAssertEqual(model.inflows(input), [])
         XCTAssertEqual(model.outflows(input), [flow])
         XCTAssertEqual(model.inflows(output), [flow])
         XCTAssertEqual(model.outflows(output), [])
+        
+        XCTAssertIdentical(model.drainedBy(flow), input)
+        XCTAssertIdentical(model.filledBy(flow), output)
     }
+    
 
     func testConnectFlowSameContainer() throws {
         let model = Model()
@@ -65,8 +71,8 @@ final class ModelTests: XCTestCase {
         model.add(input)
         model.add(flow)
 
-        model.connect(flow, from: input)
-        model.connect(flow, to: input)
+        model.connect(from: input, to: flow, as: .flow)
+        model.connect(from: flow, to: input, as: .flow)
         
         let errors = model.validate()
 

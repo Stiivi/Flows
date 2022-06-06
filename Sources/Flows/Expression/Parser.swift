@@ -398,7 +398,6 @@ class Parser {
     public func parse() -> Expression? {
         let expr = expression()
         
-        print("FINISHED WITH: \(currentToken)")
         if currentToken?.type != .empty {
             fatalError("Unexpected token: \(String(describing: currentToken))")
         }

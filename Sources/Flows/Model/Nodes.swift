@@ -1,4 +1,10 @@
-public class Node: Equatable, Hashable {
+public class Node: Equatable, Hashable, CustomStringConvertible {
+    
+    /// The model this node is associated with. A node can be associated only
+    /// with one model.
+    ///
+    public var model: Model? = nil
+    
     var name: String
     var expression: Expression
     
@@ -39,59 +45,59 @@ public class Node: Equatable, Hashable {
         let value = try evaluator.evaluate(expression)
         return value!.floatValue()!
     }
+    
+    public var description: String {
+        let typename = "\(type(of: self))"
+        return "\(typename)(\(name))"
+    }
 }
 
-func evaluateExpression(_ expression: Expression, state: SimulationState) -> Float {
-    return 0
-}
-
-public class Flow: Node, CustomStringConvertible {
-    var origin: Container?
-    var target: Container?
+public class Flow: Node{
     var expressionString: String
     
-    init(name: String,
-         from origin: Container?=nil,
-         to target: Container?=nil,
+    public init(name: String,
          expression: String){
-        self.origin = origin
-        self.target = target
         self.expressionString = expression
         super.init(name: name, expressionString: expression)
     }
-
-    public var description: String {
-        return "Transform(\(name), \(expressionString))"
-    }
 }
 
-public class Transform: Node, CustomStringConvertible {
-    init(name: String, expression: String) {
+public class Transform: Node{
+    public init(name: String, expression: String) {
         super.init(name: name, expressionString: expression)
-    }
-    
-    public var description: String {
-        return "Transform(\(name), \(expression))"
     }
 }
 
 public class Container: Node {
-    init(name: String, expression: String) {
+    public init(name: String, expression: String) {
         super.init(name: name, expressionString: expression)
     }
-    init(name: String, float value: Float) {
+    public init(name: String, float value: Float) {
         let expression = Expression.value(.float(value))
         super.init(name: name, expression: expression)
     }
 }
+public enum LinkType {
+    /// Denotes a link where the origin is a variable parameter for the target
+    case parameter
+    /// Denotes a link where the one of the sides is a flow and another is a
+    /// container
+    case flow
+}
 
-public class Link {
+public class Link: CustomStringConvertible {
     let origin: Node
     let target: Node
+    let type: LinkType
     
-    init(from origin: Node, to target: Node){
+    init(from origin: Node, to target: Node, type: LinkType = .parameter){
         self.origin = origin
         self.target = target
+        self.type = type
+    }
+    
+    public var description: String {
+        return "Link(\(origin) -> \(target), \(type)"
     }
 }
 

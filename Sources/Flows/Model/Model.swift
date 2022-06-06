@@ -31,20 +31,54 @@ public class Model {
     var formulas: [Transform] { nodes.compactMap { $0 as? Transform } }
 
     var links: [Link]
+    var flowLinks: [Link] { links.filter { $0.type == .flow} }
+    var parameterLinks: [Link] { links.filter { $0.type == .parameter} }
 
-    init(nodes: [Node]=[],
+    public init(nodes: [Node]=[],
          links: [Link]=[]) {
         self.nodes = nodes
         self.links = links
         // FIXME: Validate model here?
     }
        
+    /// Returns a container that is drained by the flow – that is a container
+    /// to which the flow is an outflow. Returns `nil` if
+    /// no container is being drained by the given flow.
+    ///
+    func drainedBy(_ flow: Flow) -> Container? {
+        let link = flowLinks.first {
+            $0.target === flow && ($0.origin as? Container != nil)
+        }
+        return (link?.origin as? Container)
+    }
+
+    /// Returns a container that is filled by the flow – that is a container
+    /// to which the flow is an inflow. Returns `nil` if
+    /// no container is being drained by the given flow.
+    ///
+    func filledBy(_ flow: Flow) -> Container? {
+        let link = flowLinks.first {
+            $0.origin === flow && ($0.target as? Container != nil)
+        }
+        return (link?.target as? Container)
+    }
+
+    /// List of flows flowing into a container.
+    ///
     func inflows(_ container: Container) -> [Flow] {
-        return flows.filter { $0.target === container }
+        let flowLinks = flowLinks.filter {
+            ($0.origin as? Flow != nil) && $0.target === container
+        }
+        return flowLinks.compactMap { $0.origin as? Flow }
     }
     
+    /// List of flows flowing out from a container.
+    ///
     func outflows(_ container: Container) -> [Flow] {
-        return flows.filter { $0.origin === container }
+        let flowLinks = flowLinks.filter {
+            ($0.target as? Flow != nil) && $0.origin === container
+        }
+        return flowLinks.compactMap { $0.target as? Flow }
     }
 
     func parameters(for node: Node) -> [Transform] {
@@ -60,7 +94,7 @@ public class Model {
         return nodes.first { $0.name == name }
     }
     
-    subscript(_ name: String) -> Node? {
+    public subscript(_ name: String) -> Node? {
         get {
             return node(name)
         }
@@ -68,31 +102,94 @@ public class Model {
     
     // MARK: Actions
     
+    /// Adds a node to the model.
+    ///
+    /// Node must not be part of another model.
+    ///
     public func add(_ node: Node) {
+        precondition(node.model == nil)
         precondition(!nodes.contains { $0 === node})
+        node.model = self
         nodes.append(node)
     }
-   
-    // FIXME: The "connect()" is confusing - we need to distinguish nodes and flows
-    /// Connect input of the flow to be the container `container`. Replaces
-    /// previous connection.
+    
+    /// Remove node and all connections from/to the node from the model.
     ///
-    public func connect(_ flow: Flow, from container: Container) {
-        flow.origin = container
+    public func remove(node: Node) {
+        links.removeAll { $0.origin === node || $0.target === node }
+        nodes.removeAll { $0 === node }
+        node.model = nil
     }
 
-    /// Connect output of the flow to be the container `container`. Replaces
-    /// previous connection.
+    /// Remove node and all connections from/to the node from the model.
     ///
-    public func connect(_ flow: Flow, to container: Container) {
-        flow.target = container
+    public func remove(link: Link) {
+        links.removeAll { $0 === link }
     }
     
-    public func connect(from origin: Node, to target: Node) {
-        let link = Link(from: origin, to: target)
+    // TODO: Fix the node names
+    /// Validates potential connection originating in node `origin` and ending in node
+    /// `target`.
+    ///
+    /// Valid connections:
+    ///
+    /// - From transform to any
+    /// - From container to flow or transform
+    /// - From flow to container or transform
+    ///
+    /// Invalid:
+    ///
+    /// - From flow to flow
+    /// - From flow to multiple containers
+    /// - From multiple containers to flow
+    ///
+    /// - Returns: `true` if nodes can be connected, `false` if the connection is
+    /// invalid.
+    ///
+    public func canConnect(from origin: Node, to target: Node) -> Bool {
+        if origin as? Transform != nil {
+            return true
+        }
+        if let flow = origin as? Flow, let container = target as? Container {
+            return filledBy(flow) == nil
+        }
+        if let flow = target as? Flow, let container = origin as? Container {
+            return drainedBy(flow) == nil
+        }
+        
+        // TODO: Write more rules.
+        
+        return true
+    }
+    
+    /// Connects two nodes.
+    ///
+    /// - Note: This method is not validating whether the connection is valid or
+    /// not. It might make the model inconsistent
+    ///
+    public func connect(from origin: Node, to target: Node, as type: LinkType = .parameter) {
+        let link = Link(from: origin, to: target, type: type)
         self.links.append(link)
     }
-    
+
+    /// Connects two nodes as flows.
+    ///
+    public func connectFlow(from origin: Node, to target: Node) {
+        if let flow = origin as? Flow, let container = target as? Container {
+            guard filledBy(flow) == nil else {
+                fatalError("Flow \(flow) is already filling a node \(filledBy(flow)!)")
+            }
+        }
+        if let flow = target as? Flow, let container = origin as? Container {
+            guard drainedBy(flow) == nil else {
+                fatalError("Flow \(flow) is already draining a node \(drainedBy(flow)!)")
+            }
+        }
+        
+        let link = Link(from: origin, to: target, type: .flow)
+        self.links.append(link)
+    }
+
     /// Return all outgoing links from a node
     public func outgoing(_ node: Node) -> [Link] {
         return links.filter { $0.origin === node }
@@ -103,12 +200,11 @@ public class Model {
         return links.filter { $0.target === node }
     }
 
-    /// Return all outgoing links from a node
-    public func inputs(_ node: Node) -> [Node] {
-        return incoming(node).map { $0.origin }
+    /// Return all incoming parameter links to a node
+    public func parameters(_ node: Node) -> [Link] {
+        return links.filter { $0.type == .parameter && $0.target === node }
     }
 
-    
     // Add container
     // Remove container
     // Add flow
