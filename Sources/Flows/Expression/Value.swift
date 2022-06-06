@@ -5,6 +5,8 @@
 //  Created by Stefan Urbanek on 2020/12/14.
 //
 
+// Note: This is from project Tarot. Still evolving. Keep concepts in sync if possible.
+
 import Foundation
 
 // TODO: Use ValueProtocol and then Something.asValue
@@ -56,6 +58,15 @@ public enum ValueType: String, Equatable, Codable, CustomStringConvertible {
         case (.string, .bool):   return true
         case (.string, .int):    return true
         case (.string, .float): return true
+        }
+    }
+   
+    /// True if the type is either `int` or `float`
+    public var isNumeric: Bool {
+        switch self {
+        case .float: return true
+        case .int: return true
+        default: return false
         }
     }
     

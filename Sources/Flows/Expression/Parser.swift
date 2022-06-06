@@ -170,7 +170,7 @@ class Lexer {
 //            }
             // FIXME: Deal with negative integer and/or unary minus
         }
-        else if accept("+") || accept("*") || accept("/") || accept("^") {
+        else if accept("+") || accept("*") || accept("/") || accept("%") {
             return Token(type: .operator, location: start, text: text)
         }
         else {
@@ -221,6 +221,7 @@ class Lexer {
 }
 
 // https://craftinginterpreters.com/parsing-expressions.html
+// https://stackoverflow.com/questions/2245962/writing-a-parser-like-flex-bison-that-is-usable-on-8-bit-embedded-systems/2336769#2336769
 
 class Parser {
     let lexer: Lexer
@@ -338,7 +339,7 @@ class Parser {
         return nil
     }
     
-    // unary -> ( "!" | "-" ) unary | primary ;
+    // unary -> "-" unary | primary ;
     //
     func unary() -> Expression? {
         // TODO: Add '!'
@@ -362,7 +363,7 @@ class Parser {
             return nil
         }
         
-        while let op = `operator`("/") ?? `operator`("*") {
+        while let op = `operator`("*") ?? `operator`("/") ?? `operator`("%"){
             guard let right = unary() else {
                 fatalError("Expected factor")
             }

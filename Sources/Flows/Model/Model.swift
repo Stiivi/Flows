@@ -28,7 +28,7 @@ public class Model {
     // Convenience
     var containers: [Container] { nodes.compactMap { $0 as? Container } }
     var flows: [Flow] { nodes.compactMap { $0 as? Flow } }
-    var formulas: [Formula] { nodes.compactMap { $0 as? Formula } }
+    var formulas: [Transform] { nodes.compactMap { $0 as? Transform } }
 
     var links: [Link]
 
@@ -38,7 +38,7 @@ public class Model {
         self.links = links
         // FIXME: Validate model here?
     }
-    
+       
     func inflows(_ container: Container) -> [Flow] {
         return flows.filter { $0.target === container }
     }
@@ -47,10 +47,10 @@ public class Model {
         return flows.filter { $0.origin === container }
     }
 
-    func parameters(for node: Node) -> [Formula] {
+    func parameters(for node: Node) -> [Transform] {
         let params = links.filter {
             $0.target === node
-        }.compactMap { $0.target as? Formula }
+        }.compactMap { $0.target as? Transform }
         return params
     }
     /// Return a node with given name. If no such node exists, then returns
@@ -72,7 +72,8 @@ public class Model {
         precondition(!nodes.contains { $0 === node})
         nodes.append(node)
     }
-    
+   
+    // FIXME: The "connect()" is confusing - we need to distinguish nodes and flows
     /// Connect input of the flow to be the container `container`. Replaces
     /// previous connection.
     ///

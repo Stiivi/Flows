@@ -18,45 +18,69 @@ public class SimulationState {
 }
 
 public class Simulator {
-    let model: Model
-    var history: [SimulationState] = []
+    public let model: Model
+    public let compiledModel: CompiledModel
+    public var history: [SimulationState] = []
     
     var last: SimulationState? { history.last }
     
     init(model: Model) {
         self.model = model
+        do {
+            try self.compiledModel = model.compile()
+        }
+        catch {
+            fatalError("Model compilation error: \(error)")
+        }
     }
     
     /// Runs the simulation for given number of steps and return last state
     /// of the simulation.
     ///
     func run(steps: Int) -> SimulationState {
-        // Initialise state
-
-        var state: SimulationState
+        guard steps > 0 else {
+            fatalError("Number of simulation steps should be > 0")
+        }
         
-        if let lastState = last {
-            state = lastState
+        // Initialise state
+        if history.isEmpty {
+            initialize()
         }
-        else {
-            state = evaluate()
-            history.append(state)
-        }
-
-        print("0: \(state)")
+        
         for t in 1...steps {
+            let state: SimulationState
             state = step(t)
-            print("\(t): \(state)")
             history.append(state)
         }
-        return state
+        return last!
+    }
+    
+    /// Initialize the simulation
+    func initialize() {
+        let state = SimulationState()
+        
+        for node in compiledModel.nodes {
+            do {
+                state.values[node.name] = try node.evaluate(state: state)
+            }
+            catch {
+                fatalError("Evaluation failed: \(error)")
+            }
+        }
+        history.removeAll()
+        history.append(state)
     }
     
     func evaluate() -> SimulationState {
         let state = SimulationState()
         
         for node in model.nodes {
-            state.values[node.name] = node.evaluate(state: state)
+            do {
+                state.values[node.name] = try node.evaluate(state: last!)
+            }
+            catch {
+                fatalError("Evaluation failed: \(error)")
+            }
         }
         
         return state

@@ -91,7 +91,7 @@ final class LexerTests: XCTestCase {
 
 
     func testOperator() throws {
-        let lexer = Lexer(string: "+ - * / ^")
+        let lexer = Lexer(string: "+ - * / %")
 
         var token = lexer.next()
         XCTAssertEqual(token.type, TokenType.operator)
@@ -111,7 +111,7 @@ final class LexerTests: XCTestCase {
 
         token = lexer.next()
         XCTAssertEqual(token.type, TokenType.operator)
-        XCTAssertEqual(token.text, "^")
+        XCTAssertEqual(token.text, "%")
     }
 
     func testIdentifier() throws {
