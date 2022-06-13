@@ -5,7 +5,7 @@
 //  Created by Stefan Urbanek on 27/05/2022.
 //
 
-import Foundation
+import Graph
 
 public enum ModelCompilationError: Error {
     case validation([ModelError])
@@ -21,18 +21,18 @@ extension Model {
         // Topologically sort
         
         // L ← Empty list that will contain the sorted elements
-        var sorted: [Node] = []
+        var sorted: [ExpressionNode] = []
 
         // S ← Set of all nodes with no incoming edge
-        var sources: [Node] = self.nodes.filter {
-            parameters($0).isEmpty
+        var sources: [ExpressionNode] = self.expressionNodes.filter {
+            $0.incomingParameterNodes.isEmpty
         }
 
         var links = self.parameterLinks
         
         //
         //while S is not empty do
-        var node: Node
+        var node: ExpressionNode
         while !sources.isEmpty {
             //    remove a node n from S
             node = sources.removeFirst()
@@ -44,7 +44,7 @@ extension Model {
             
             for link in outgoing {
                 links.removeAll { $0 === link }
-                let m = link.target
+                let m = link.target as! ExpressionNode
                 print("    - m: \(m.name)")
                 if links.allSatisfy({$0.target != m}) {
                     print("    + adding new source: \(m.name)")
@@ -59,7 +59,7 @@ extension Model {
 
         }
         if !links.isEmpty {
-            fatalError("Cycle")
+            fatalError("Graph contains cycles. Links: \(links)")
         }
 
         let compiledModel = CompiledModel(nodes: sorted)
@@ -100,7 +100,7 @@ extension Model {
         // Check names
         //
         var seen: [String:Set<Node>] = [:]
-        for node in nodes {
+        for node in expressionNodes {
             if seen[node.name] != nil {
                 seen[node.name]!.insert(node)
             }

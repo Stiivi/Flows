@@ -5,7 +5,7 @@
 //  Created by Stefan Urbanek on 26/05/2022.
 //
 
-import Foundation
+import Graph
 
 public enum ModelError: Error, Equatable {
     /// Flow's input and output are the same node
@@ -21,26 +21,56 @@ public enum ModelError: Error, Equatable {
     case cycle(Node)
 }
 
+public enum LinkType: String {
+    case flow
+    case parameter
+}
+
 public class Model {
-    // TODO: Unify these as nodes
-    var nodes: [Node]
+    static let FlowLabel = "flow"
+    static let ParameterLabel = "parameter"
+    static let ExpressionLabel = "expression"
+
+    /// Structure that holds all model objects – nodes and links.
+    ///
+    let graph: Graph
     
-    // Convenience
-    var containers: [Container] { nodes.compactMap { $0 as? Container } }
-    var flows: [Flow] { nodes.compactMap { $0 as? Flow } }
-    var formulas: [Transform] { nodes.compactMap { $0 as? Transform } }
+    /// Sequence of IDs that are assigned to the model objects for user-facing
+    /// identification.
+    ///
+    let idSequence: SequentialIDGenerator = SequentialIDGenerator()
+    
+    var expressionNodes: [ExpressionNode] { graph.nodes.compactMap { $0 as? ExpressionNode } }
+    
+    var containers: [Container] { graph.nodes.compactMap { $0 as? Container } }
+    var flows: [Flow] { graph.nodes.compactMap { $0 as? Flow } }
+    var formulas: [Transform] { graph.nodes.compactMap { $0 as? Transform } }
 
-    var links: [Link]
-    var flowLinks: [Link] { links.filter { $0.type == .flow} }
-    var parameterLinks: [Link] { links.filter { $0.type == .parameter} }
-
-    public init(nodes: [Node]=[],
-         links: [Link]=[]) {
-        self.nodes = nodes
-        self.links = links
-        // FIXME: Validate model here?
+    var flowLinks: [Link] {
+        graph.links.filter { $0.contains(label: Model.FlowLabel) }
+    }
+    var parameterLinks: [Link] {
+        graph.links.filter { $0.contains(label: Model.ParameterLabel) }
+    }
+    
+    // MARK: - Initialisation
+    
+    public init(graph: Graph? = nil) {
+        self.graph = graph ?? Graph()
     }
        
+    // MARK: - Query
+
+    /// Return all outgoing links from a node
+    public func outgoing(_ node: Node) -> [Link] {
+        return graph.outgoing(node)
+    }
+
+    /// Return all incoming links to a node
+    public func incoming(_ node: Node) -> [Link] {
+        return graph.incoming(node)
+    }
+
     /// Returns a container that is drained by the flow – that is a container
     /// to which the flow is an outflow. Returns `nil` if
     /// no container is being drained by the given flow.
@@ -82,7 +112,7 @@ public class Model {
     }
 
     func parameters(for node: Node) -> [Transform] {
-        let params = links.filter {
+        let params = parameterLinks.filter {
             $0.target === node
         }.compactMap { $0.target as? Transform }
         return params
@@ -90,8 +120,10 @@ public class Model {
     /// Return a node with given name. If no such node exists, then returns
     /// `nil`.
     ///
+    /// - Note: Only expression nodes can have a name.
+    ///
     func node(_ name: String) -> Node? {
-        return nodes.first { $0.name == name }
+        return expressionNodes.first { $0.name == name }
     }
     
     public subscript(_ name: String) -> Node? {
@@ -100,31 +132,31 @@ public class Model {
         }
     }
     
-    // MARK: Actions
+    // MARK: - Mutation
     
     /// Adds a node to the model.
     ///
+    /// The model will become the owner of the node and will assign it an ID.
     /// Node must not be part of another model.
     ///
     public func add(_ node: Node) {
-        precondition(node.model == nil)
-        precondition(!nodes.contains { $0 === node})
-        node.model = self
-        nodes.append(node)
+        precondition(node.id == nil)
+        node.id = idSequence.next()
+        graph.add(node)
     }
     
     /// Remove node and all connections from/to the node from the model.
     ///
+    /// The node is no longer owned by the model.
+    ///
     public func remove(node: Node) {
-        links.removeAll { $0.origin === node || $0.target === node }
-        nodes.removeAll { $0 === node }
-        node.model = nil
+        graph.remove(node)
     }
 
-    /// Remove node and all connections from/to the node from the model.
+    /// Remove a link from the graph.
     ///
     public func remove(link: Link) {
-        links.removeAll { $0 === link }
+        graph.disconnect(link: link)
     }
     
     // TODO: Fix the node names
@@ -167,9 +199,13 @@ public class Model {
     /// - Note: This method is not validating whether the connection is valid or
     /// not. It might make the model inconsistent
     ///
-    public func connect(from origin: Node, to target: Node, as type: LinkType = .parameter) {
-        let link = Link(from: origin, to: target, type: type)
-        self.links.append(link)
+    public func connect(from origin: Node, to target: Node, as type: LinkType = .parameter, labels: LabelSet = []) {
+        // TODO: Rename this to "connectParameter"
+        let id = idSequence.next()
+        
+        let finalLabels = Set([type.rawValue] + labels)
+        
+        graph.connect(from: origin, to: target, labels: finalLabels, id: id)
     }
 
     /// Connects two nodes as flows.
@@ -186,24 +222,13 @@ public class Model {
             }
         }
         
-        let link = Link(from: origin, to: target, type: .flow)
-        self.links.append(link)
+        connect(from: origin, to: target, as: .flow)
     }
 
-    /// Return all outgoing links from a node
-    public func outgoing(_ node: Node) -> [Link] {
-        return links.filter { $0.origin === node }
+    func __setupContstraints() {
+        
     }
-
-    /// Return all incoming links to a node
-    public func incoming(_ node: Node) -> [Link] {
-        return links.filter { $0.target === node }
-    }
-
-    /// Return all incoming parameter links to a node
-    public func parameters(_ node: Node) -> [Link] {
-        return links.filter { $0.type == .parameter && $0.target === node }
-    }
+    
 
     // Add container
     // Remove container

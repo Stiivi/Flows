@@ -65,7 +65,7 @@ public class Simulator {
     func evaluate() -> SimulationState {
         let state = SimulationState()
         
-        for node in model.nodes {
+        for node in model.expressionNodes {
             do {
                 state.values[node.name] = try node.evaluate(state: last!)
             }
