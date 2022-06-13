@@ -71,15 +71,34 @@ extension Model {
     
     public func validate() -> [ModelError] {
         let errors: [ModelError]
+       
+        // Validate constraints
         
         errors = validateFlowInputOutput()
                     + validateUniqueNames()
 //                    + validateCycles()
                     + validateUsedInputs()
+        + validateConstraints()
 
         return errors
     }
     
+    public func validateConstraints() -> [ModelError] {
+        var errors: [ModelError] = []
+        
+        for constraint in linkConstraints {
+            for link in graph.links {
+                guard constraint.match(link) else {
+                    continue
+                }
+                if !constraint.check(link) {
+                    let text = "Link \(link) violates constraint: \(constraint)"
+                    errors.append(ModelError.unknown(text))
+                }
+            }
+        }
+        return errors
+    }
     /// Validate inputs and outputs of flows
     ///
     public func validateFlowInputOutput() -> [ModelError] {

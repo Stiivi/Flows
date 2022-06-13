@@ -59,6 +59,13 @@ open class GraphObject: Identifiable, CustomStringConvertible {
         return labels.contains(label)
     }
     
+    /// Returns `true` if the object contains all of the labels.
+    ///
+    public func contains(labels: LabelSet) -> Bool {
+        return labels.isSubset(of: self.labels)
+    }
+
+    
     /// Sets object label.
     public func set(label: Label) {
         labels.insert(label)

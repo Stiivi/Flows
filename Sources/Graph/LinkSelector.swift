@@ -40,7 +40,7 @@ public struct LinkSelector {
     
     /// Create a labelled link type.
     ///
-    /// - Properties:
+    /// - Parameters:
     ///     - label: Label of links that conform to this type
     ///     - direction: Direction of links to be considered when relating
     ///       to a projected node.

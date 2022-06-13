@@ -19,6 +19,9 @@ public enum ModelError: Error, Equatable {
     
     /// Cycle in computation graph has been detected.
     case cycle(Node)
+    
+    /// Debug error (during development only)
+    case unknown(String)
 }
 
 public enum LinkType: String {
@@ -54,9 +57,21 @@ public class Model {
     }
     
     // MARK: - Initialisation
+   
+    var linkConstraints: [LinkConstraint]
     
     public init(graph: Graph? = nil) {
         self.graph = graph ?? Graph()
+        
+        linkConstraints = [
+            UniqueNeighbourConstraint(nodes: LabelsPredicate("flow"),
+                                      links: LinkSelector("flow", direction: .outgoing)),
+            UniqueNeighbourConstraint(nodes: LabelsPredicate("flow"),
+                                      links: LinkSelector("flow", direction: .incoming)),
+            ProhibitedLink(origin: LabelsPredicate("flow"),
+                           target: LabelsPredicate("flow")),
+
+        ]
     }
        
     // MARK: - Query
