@@ -8,8 +8,8 @@
 import Flows
 
 let model = Model()
-model.add(Container(name: "fish", float: 1000))
-model.add(Container(name: "shark", float: 10))
+model.add(Stock(name: "fish", float: 1000))
+model.add(Stock(name: "shark", float: 10))
 
 model.add(Transform(name: "fish_birth_rate", expression: "0.01" ))
 model.add(Transform(name: "shark_birth_rate", expression: "0.6" ))

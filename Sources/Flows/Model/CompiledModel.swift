@@ -11,7 +11,7 @@ public class CompiledModel {
     /// Topologically sorted nodes
     let nodes: [ExpressionNode]
 
-    var containers: [Container] { nodes.compactMap { $0 as? Container } }
+    var stocks: [Stock] { nodes.compactMap { $0 as? Stock } }
     
     public init(nodes: [ExpressionNode]) {
         self.nodes = nodes

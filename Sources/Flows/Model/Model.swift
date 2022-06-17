@@ -42,7 +42,7 @@ public class Model {
     
     var expressionNodes: [ExpressionNode] { graph.nodes.compactMap { $0 as? ExpressionNode } }
     
-    var containers: [Container] { graph.nodes.compactMap { $0 as? Container } }
+    var stocks: [Stock] { graph.nodes.compactMap { $0 as? Stock } }
     var flows: [Flow] { graph.nodes.compactMap { $0 as? Flow } }
     var formulas: [Transform] { graph.nodes.compactMap { $0 as? Transform } }
 
@@ -119,42 +119,42 @@ public class Model {
         return graph.incoming(node)
     }
 
-    /// Returns a container that is drained by the flow – that is a container
+    /// Returns a stock that is drained by the flow – that is a stock
     /// to which the flow is an outflow. Returns `nil` if
-    /// no container is being drained by the given flow.
+    /// no stock is being drained by the given flow.
     ///
-    func drainedBy(_ flow: Flow) -> Container? {
+    func drainedBy(_ flow: Flow) -> Stock? {
         let link = flowLinks.first {
-            $0.target === flow && ($0.origin as? Container != nil)
+            $0.target === flow && ($0.origin as? Stock != nil)
         }
-        return (link?.origin as? Container)
+        return (link?.origin as? Stock)
     }
 
-    /// Returns a container that is filled by the flow – that is a container
+    /// Returns a stock that is filled by the flow – that is a stock
     /// to which the flow is an inflow. Returns `nil` if
-    /// no container is being drained by the given flow.
+    /// no stock is being drained by the given flow.
     ///
-    func filledBy(_ flow: Flow) -> Container? {
+    func filledBy(_ flow: Flow) -> Stock? {
         let link = flowLinks.first {
-            $0.origin === flow && ($0.target as? Container != nil)
+            $0.origin === flow && ($0.target as? Stock != nil)
         }
-        return (link?.target as? Container)
+        return (link?.target as? Stock)
     }
 
-    /// List of flows flowing into a container.
+    /// List of flows flowing into a stock.
     ///
-    func inflows(_ container: Container) -> [Flow] {
+    func inflows(_ stock: Stock) -> [Flow] {
         let flowLinks = flowLinks.filter {
-            ($0.origin as? Flow != nil) && $0.target === container
+            ($0.origin as? Flow != nil) && $0.target === stock
         }
         return flowLinks.compactMap { $0.origin as? Flow }
     }
     
-    /// List of flows flowing out from a container.
+    /// List of flows flowing out from a stock.
     ///
-    func outflows(_ container: Container) -> [Flow] {
+    func outflows(_ stock: Stock) -> [Flow] {
         let flowLinks = flowLinks.filter {
-            ($0.target as? Flow != nil) && $0.origin === container
+            ($0.target as? Flow != nil) && $0.origin === stock
         }
         return flowLinks.compactMap { $0.target as? Flow }
     }
@@ -214,14 +214,14 @@ public class Model {
     /// Valid connections:
     ///
     /// - From transform to any
-    /// - From container to flow or transform
-    /// - From flow to container or transform
+    /// - From stock to flow or transform
+    /// - From flow to stock or transform
     ///
     /// Invalid:
     ///
     /// - From flow to flow
-    /// - From flow to multiple containers
-    /// - From multiple containers to flow
+    /// - From flow to multiple stocks
+    /// - From multiple stocks to flow
     ///
     /// - Returns: `true` if nodes can be connected, `false` if the connection is
     /// invalid.
@@ -255,8 +255,8 @@ public class Model {
     }
 
 
-    // Add container
-    // Remove container
+    // Add stock
+    // Remove stock
     // Add flow
     // Remove flow
     // Connect flow input

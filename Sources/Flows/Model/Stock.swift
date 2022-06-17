@@ -6,7 +6,7 @@
 //
 
 import Foundation
-public class Container: ExpressionNode {
+public class Stock: ExpressionNode {
     public init(name: String, expression: String) {
         super.init(name: name, expressionString: expression)
     }

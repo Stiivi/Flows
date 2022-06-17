@@ -80,18 +80,18 @@ public class Simulator {
     func step(_ t: Int) -> SimulationState {
         let newState = evaluate()
         
-        for container in model.containers {
+        for stock in model.stocks {
             var delta: Float = 0
             
-            for inflow in model.inflows(container) {
+            for inflow in model.inflows(stock) {
                 delta += last![inflow.name]!
             }
             
-            for outflow in model.outflows(container) {
+            for outflow in model.outflows(stock) {
                 delta -= last![outflow.name]!
             }
             
-            newState.values[container.name]! = last![container.name]! + delta
+            newState.values[stock.name]! = last![stock.name]! + delta
         }
         return newState
     }

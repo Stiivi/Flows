@@ -14,12 +14,12 @@ final class ModelTests: XCTestCase {
         XCTAssertTrue(model.validate().isEmpty)
     }
 
-    func testAddContainer() throws {
+    func testAddStock() throws {
         let model = Model()
-        let node = Container(name: "c", float: 0)
+        let node = Stock(name: "c", float: 0)
         model.add(node)
         
-        XCTAssertIdentical(model.containers.first, node)
+        XCTAssertIdentical(model.stocks.first, node)
         XCTAssertTrue(node.contains(label: "stock"))
     }
 
@@ -46,8 +46,8 @@ final class ModelTests: XCTestCase {
     func testConnectFlow() throws {
         let model = Model()
         let flow = Flow(name: "flow", expression: "0")
-        let input = Container(name: "in", float: 100)
-        let output = Container(name: "out", float: 0)
+        let input = Stock(name: "in", float: 100)
+        let output = Stock(name: "out", float: 0)
 
         model.add(input)
         model.add(output)
@@ -69,8 +69,8 @@ final class ModelTests: XCTestCase {
         // NOTE: Sync with testSingleOutflow()
         let model = Model()
         let flow = Flow(name: "flow", expression: "0")
-        let stock1 = Container(name: "one", float: 0)
-        let stock2 = Container(name: "two", float: 0)
+        let stock1 = Stock(name: "one", float: 0)
+        let stock2 = Stock(name: "two", float: 0)
         model.add(flow)
         model.add(stock1)
         model.add(stock2)
@@ -98,8 +98,8 @@ final class ModelTests: XCTestCase {
         // NOTE: Sync with testSingleInflow()
         let model = Model()
         let flow = Flow(name: "flow", expression: "0")
-        let stock1 = Container(name: "one", float: 0)
-        let stock2 = Container(name: "two", float: 0)
+        let stock1 = Stock(name: "one", float: 0)
+        let stock2 = Stock(name: "two", float: 0)
         model.add(flow)
         model.add(stock1)
         model.add(stock2)
@@ -141,10 +141,10 @@ final class ModelTests: XCTestCase {
     }
     
 
-    func testConnectFlowSameContainer() throws {
+    func testConnectFlowSameStock() throws {
         let model = Model()
         let flow = Flow(name: "flow", expression: "0")
-        let input = Container(name: "in", float: 100)
+        let input = Stock(name: "in", float: 100)
 
         model.add(input)
         model.add(flow)
@@ -193,12 +193,12 @@ final class ModelTests: XCTestCase {
     func testValidateDuplicateName() throws {
         let model = Model()
 
-        let c1 = Container(name: "things", float: 0)
-        let c2 = Container(name: "things", float: 0)
+        let c1 = Stock(name: "things", float: 0)
+        let c2 = Stock(name: "things", float: 0)
         model.add(c1)
         model.add(c2)
-        model.add(Container(name: "a", float: 0))
-        model.add(Container(name: "b", float: 0))
+        model.add(Stock(name: "a", float: 0))
+        model.add(Stock(name: "b", float: 0))
 
         let violations = model.constraintChecker.check(graph: model.graph)
         XCTAssertEqual(violations.count, 1)

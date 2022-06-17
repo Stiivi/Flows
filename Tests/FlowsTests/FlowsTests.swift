@@ -6,9 +6,9 @@ final class FlowsTests: XCTestCase {
     func testFlow() throws {
         let model = Model()
         
-        model.add(Container(name: "a", float: 100))
-        model.add(Container(name: "b", float: 0))
-        model.add(Container(name: "c", float: 0))
+        model.add(Stock(name: "a", float: 100))
+        model.add(Stock(name: "b", float: 0))
+        model.add(Stock(name: "c", float: 0))
 
         model.add(Flow(name: "f1", expression: "1"))
         model.add(Flow(name: "f2", expression: "2"))
@@ -36,8 +36,8 @@ final class FlowsTests: XCTestCase {
     
     func testParameter() throws {
         let model = Model()
-        model.add(Container(name: "a", float: 100))
-        model.add(Container(name: "b", float: 0))
+        model.add(Stock(name: "a", float: 100))
+        model.add(Stock(name: "b", float: 0))
 
         model.add(Transform(name: "x", expression: "2" ))
 
