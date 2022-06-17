@@ -11,6 +11,25 @@ public enum ModelCompilationError: Error {
     case validation([ModelError])
 }
 
+/// Predicate that matches flow nodes with the same drain and fill stocks
+public class SameDrainFill: NodePredicate {
+    // TODO: Be free from the model, rethink the inflow/outflow model methods
+    let model: Model
+    
+    public init(model: Model) {
+        self.model = model
+    }
+    
+    public func match(_ node: Node) -> Bool {
+        guard let flow = node as? Flow else {
+            return false
+        }
+        
+        let node = model.drainedBy(flow)
+        return node != nil && model.drainedBy(flow) === model.filledBy(flow)
+    }
+}
+
 extension Model {
     func compile() throws -> CompiledModel {
         let errors = validate()
@@ -74,11 +93,8 @@ extension Model {
        
         // Validate constraints
         
-        errors = validateFlowInputOutput()
-                    + validateUniqueNames()
+        errors = validateUsedInputs() + validateConstraints()
 //                    + validateCycles()
-                    + validateUsedInputs()
-        + validateConstraints()
 
         return errors
     }
@@ -96,43 +112,6 @@ extension Model {
         }
         
         return errors
-    }
-    /// Validate inputs and outputs of flows
-    ///
-    public func validateFlowInputOutput() -> [ModelError] {
-        // Check for same input/output of flows
-        //
-        let errors: [ModelError] = flows.filter { flow in
-            let node = drainedBy(flow)
-            return node != nil && drainedBy(flow) === filledBy(flow)
-        }.map { flow in
-            .sameFlowInputOutput(flow)
-        }
-        
-        return errors
-    }
-    
-    public func validateUniqueNames() -> [ModelError] {
-        
-        // Check names
-        //
-        var seen: [String:Set<Node>] = [:]
-        for node in expressionNodes {
-            if seen[node.name] != nil {
-                seen[node.name]!.insert(node)
-            }
-            else {
-                seen[node.name] = Set([node])
-            }
-        }
-        
-        let dupes: [ModelError] = seen.filter { (name, nodes) in
-            nodes.count > 1
-        }.map { (name, nodes) in
-            .duplicateName(name, nodes)
-        }
-    
-        return dupes
     }
     
 //    public func validateCycles() -> [ModelError] {

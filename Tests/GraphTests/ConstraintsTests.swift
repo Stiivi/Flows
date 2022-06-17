@@ -109,3 +109,41 @@ final class LinkRequirementsTests: XCTestCase {
         
     }
 }
+
+final class TestUniqueProperty: XCTestCase {
+    func testEmpty() throws {
+        let req = UniqueProperty<OID> { $0.id }
+        let violations = req.check(objects: [])
+        XCTAssertTrue(violations.isEmpty)
+    }
+
+    func testNoDupes() throws {
+        let req = UniqueProperty<OID> { $0.id }
+        let objects = [
+            Node(id: 10),
+            Node(id: 20),
+            Node(id: 30),
+        ]
+        
+        let violations = req.check(objects: objects)
+        XCTAssertTrue(violations.isEmpty)
+    }
+
+    func testHasDupes() throws {
+        let req = UniqueProperty<OID> { $0.id }
+        let n1 = Node(id: 10)
+        let n1d = Node(id: 10)
+        let n2 = Node(id: 20)
+        let n3 = Node(id: 30)
+        let n3d = Node(id: 30)
+        let objects = [n1, n1d, n2, n3, n3d]
+
+        let violations = req.check(objects: objects)
+        XCTAssertEqual(violations.count, 4)
+        
+        XCTAssertTrue(violations.contains(n1))
+        XCTAssertTrue(violations.contains(n1d))
+        XCTAssertTrue(violations.contains(n3))
+        XCTAssertTrue(violations.contains(n3d))
+    }
+}

@@ -25,3 +25,104 @@ public protocol Constraint {
     func check(_ graph: Graph) -> [GraphObject]
 
 }
+
+public protocol ObjectConstraintRequirement: LinkConstraintRequirement, NodeConstraintRequirement {
+    func check(objects: [GraphObject]) -> [GraphObject]
+}
+
+extension ObjectConstraintRequirement {
+    public func check(_ links: [Link]) -> [GraphObject] {
+        return check(objects: links)
+    }
+    public func check(_ nodes: [Node]) -> [GraphObject] {
+        return check(objects: nodes)
+    }
+}
+
+/// Specifies links that are prohibited. If the constraint is applied, then it
+/// matches links that are not prohibited and rejects the prohibited ones.
+///
+public class RejectAll: ObjectConstraintRequirement {
+    public init() {
+    }
+   
+    public func check(objects: [GraphObject]) -> [GraphObject] {
+        /// We reject whatever comes in
+        return objects
+    }
+}
+
+/// Requirement that accepts all objects selected by the predicate. Used mostly
+/// as a placeholder or for testing.
+///
+public class AcceptAll: ObjectConstraintRequirement {
+    public init() {
+    }
+   
+    public func check(objects: [GraphObject]) -> [GraphObject] {
+        /// We reject whatever comes in
+        return []
+    }
+}
+
+/// Check all non-nil properties
+public class UniqueProperty<Value>: ObjectConstraintRequirement
+        where Value: Hashable {
+//    public var path: KeyPath<GraphObject, Value>
+    public var extract: (GraphObject) -> Value?
+    
+    public init(_ extract: @escaping (GraphObject) -> Value?) {
+        self.extract = extract
+    }
+//    init(_ test: (GraphObject) -> some Equatable) {
+//        self.test = test
+//    }
+//
+    
+    public func check(objects: [GraphObject]) -> [GraphObject] {
+        var seen: [Value:Array<GraphObject>] = [:]
+        
+        for object in objects {
+            guard let value = extract(object) else {
+                continue
+            }
+            
+            if seen[value] == nil {
+                seen[value] = [object]
+            }
+            else {
+                seen[value]!.append(object)
+            }
+        }
+        
+        let duplicates = seen.filter {
+            $0.value.count > 1
+        }.flatMap {
+            $0.value
+        }
+        /// We reject whatever comes in
+        return duplicates
+    }
+}
+
+public class ObjectConstraint: Constraint {
+    public let name: String
+    public let match: Predicate
+    public let requirement: ObjectConstraintRequirement
+    
+    public init(name: String, match: Predicate, requirement: ObjectConstraintRequirement) {
+        self.name = name
+        self.match = match
+        self.requirement = requirement
+    }
+
+    /// Check the graph for the constraint and return a list of nodes that
+    /// violate the constraint
+    ///
+    public func check(_ graph: Graph) -> [GraphObject] {
+        let matched = graph.links.filter { match.match($0) }
+        let violating = requirement.check(matched)
+        return violating
+    }
+}
+

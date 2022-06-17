@@ -152,9 +152,13 @@ final class ModelTests: XCTestCase {
         model.connect(from: input, to: flow, as: .flow)
         model.connect(from: flow, to: input, as: .flow)
         
-        let errors = model.validate()
+        let violations = model.constraintChecker.check(graph: model.graph)
 
-        XCTAssertEqual(errors, [ModelError.sameFlowInputOutput(flow)])
+        XCTAssertEqual(violations.count, 1)
+            
+        let violation = violations.first!
+        
+        XCTAssertEqual(violation.name, "different_drain_fill")
     }
 
     func testCompileEmpty() throws {
@@ -196,18 +200,13 @@ final class ModelTests: XCTestCase {
         model.add(Container(name: "a", float: 0))
         model.add(Container(name: "b", float: 0))
 
-        let errors = model.validate()
-        XCTAssertEqual(errors.count, 1)
+        let violations = model.constraintChecker.check(graph: model.graph)
+        XCTAssertEqual(violations.count, 1)
+        let violation = violations.first!
         
-        let error = errors.first
-        
-        switch error {
-        case let .duplicateName(name, nodes):
-            XCTAssertEqual(name, "things")
-            XCTAssertEqual(Set(nodes), Set([c1, c2]))
-        default:
-            XCTFail("Unexpected error: \(String(describing: error))")
-        }
+        XCTAssertEqual(violation.name, "unique_node_name")
+        XCTAssertTrue(violation.objects.contains(c1))
+        XCTAssertTrue(violation.objects.contains(c2))
     }
     
 //    func testValidateCycle() throws {

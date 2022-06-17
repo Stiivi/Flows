@@ -8,12 +8,6 @@
 import Graph
 
 public enum ModelError: Error, Equatable {
-    /// Flow's input and output are the same node
-    case sameFlowInputOutput(Flow)
-    
-    /// There are multiple nodes with the same name
-    case duplicateName(String, Set<Node>)
-    
     /// Connected node is not used.
     case unusedInput(String, Node)
     
@@ -62,7 +56,8 @@ public class Model {
     // MARK: - Initialisation
    
     /// Checker for constraints during editing - more permissive
-    var constraintChecker: ConstraintChecker
+    var constraintChecker: ConstraintChecker!
+    // TODO: The above force unwrap is just to silence the compiler about `self` further down in initialization
     
     public init(graph: Graph? = nil) {
         self.graph = graph ?? Graph()
@@ -78,6 +73,25 @@ public class Model {
                     name: "single_inflow_origin",
                     match: LabelPredicate(all: "flow"),
                     requirement: UniqueNeighbourRequirement("flow", direction: .incoming)
+                ),
+                NodeConstraint(
+                    // Inflow of a stock node must be different from the outflow
+                    // TODO: Remove the model requirement
+                    name: "different_drain_fill",
+                    match: SameDrainFill(model: self),
+                    requirement: RejectAll()
+                ),
+                NodeConstraint(
+                    name: "unique_node_name",
+                    match: LabelPredicate(any: "flow", "node", "stock"),
+                    requirement: UniqueProperty<String> {
+                        if let node = $0 as? ExpressionNode {
+                            return node.name
+                        }
+                        else {
+                            return nil
+                        }
+                    }
                 ),
                 LinkConstraint(
                     name: "forbidden_flow_to_flow",

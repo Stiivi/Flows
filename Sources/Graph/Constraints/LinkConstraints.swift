@@ -39,28 +39,3 @@ public protocol LinkConstraintRequirement {
     func check(_ links: [Link]) -> [GraphObject]
 }
 
-/// Specifies links that are prohibited. If the constraint is applied, then it
-/// matches links that are not prohibited and rejects the prohibited ones.
-///
-public class RejectAll: LinkConstraintRequirement {
-    public init() {
-    }
-   
-    public func check(_ links: [Link]) -> [GraphObject] {
-        /// We reject whatever comes in
-        return links
-    }
-}
-
-/// Requirement that accepts all objects selected by the predicate. Used mostly
-/// as a placeholder or for testing.
-///
-public class AcceptAll: LinkConstraintRequirement {
-    public init() {
-    }
-   
-    public func check(_ links: [Link]) -> [GraphObject] {
-        /// We reject whatever comes in
-        return []
-    }
-}
