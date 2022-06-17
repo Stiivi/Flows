@@ -9,6 +9,6 @@ import Foundation
 
 public class Transform: ExpressionNode {
     public init(name: String, expression: String) {
-        super.init(name: name, expressionString: expression)
+        super.init(name: name, expressionString: expression, labels: ["converter"])
     }
 }

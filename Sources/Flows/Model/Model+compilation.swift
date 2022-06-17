@@ -86,17 +86,15 @@ extension Model {
     public func validateConstraints() -> [ModelError] {
         var errors: [ModelError] = []
         
-        for constraint in linkConstraints {
-            for link in graph.links {
-                guard constraint.match(link) else {
-                    continue
-                }
-                if !constraint.check(link) {
-                    let text = "Link \(link) violates constraint: \(constraint)"
-                    errors.append(ModelError.unknown(text))
-                }
+        
+        let violations = constraintChecker.check()
+        if !violations.isEmpty {
+            for violation in violations {
+                let text = String(describing: violation)
+                errors.append(ModelError.unknown(text))
             }
         }
+        
         return errors
     }
     /// Validate inputs and outputs of flows

@@ -12,7 +12,7 @@ public class Flow: ExpressionNode {
     public init(name: String,
          expression: String){
         self.expressionString = expression
-        super.init(name: name, expressionString: expression)
+        super.init(name: name, expressionString: expression, labels: ["flow"])
     }
 }
 

@@ -12,6 +12,6 @@ public class Container: ExpressionNode {
     }
     public init(name: String, float value: Float) {
         let expression = Expression.value(.float(value))
-        super.init(name: name, expression: expression)
+        super.init(name: name, expression: expression, labels: ["stock"])
     }
 }

@@ -30,6 +30,8 @@ public enum LinkType: String {
 }
 
 public class Model {
+    // TODO: Split into Model (storage) and ModelManager (editing)
+    
     static let FlowLabel = "flow"
     static let ParameterLabel = "parameter"
     static let ExpressionLabel = "expression"
@@ -37,6 +39,7 @@ public class Model {
     /// Structure that holds all model objects – nodes and links.
     ///
     let graph: Graph
+//    let intent: Graph
     
     /// Sequence of IDs that are assigned to the model objects for user-facing
     /// identification.
@@ -58,20 +61,39 @@ public class Model {
     
     // MARK: - Initialisation
    
-    var linkConstraints: [LinkConstraint]
+    /// Checker for constraints during editing - more permissive
+    var constraintChecker: ConstraintChecker
     
     public init(graph: Graph? = nil) {
         self.graph = graph ?? Graph()
-        
-        linkConstraints = [
-            UniqueNeighbourConstraint(nodes: LabelsPredicate("flow"),
-                                      links: LinkSelector("flow", direction: .outgoing)),
-            UniqueNeighbourConstraint(nodes: LabelsPredicate("flow"),
-                                      links: LinkSelector("flow", direction: .incoming)),
-            ProhibitedLink(origin: LabelsPredicate("flow"),
-                           target: LabelsPredicate("flow")),
-
-        ]
+    
+        constraintChecker = ConstraintChecker(
+            graph: self.graph,
+            nodeConstraints: [
+                NodeConstraint(
+                    name: "single_outflow_target",
+                    match: LabelPredicate(all: "flow"),
+                    requirement: UniqueNeighbourRequirement("flow", direction: .outgoing)
+                ),
+                NodeConstraint(
+                    name: "single_inflow_origin",
+                    match: LabelPredicate(all: "flow"),
+                    requirement: UniqueNeighbourRequirement("flow", direction: .incoming)
+                )
+            ],
+            linkConstraints: [
+                LinkConstraint(
+                    name: "forbidden_flow_to_flow",
+                    match: LinkObjectPredicate(
+                        origin: LabelPredicate(all: "flow"),
+                        target: LabelPredicate(all: "flow"),
+                        link: LabelPredicate(all: "flow")
+                    ),
+                    requirement: RejectAll()
+                )
+            ]
+            
+        )
     }
        
     // MARK: - Query
@@ -193,20 +215,8 @@ public class Model {
     /// - Returns: `true` if nodes can be connected, `false` if the connection is
     /// invalid.
     ///
-    public func canConnect(from origin: Node, to target: Node) -> Bool {
-        if origin as? Transform != nil {
-            return true
-        }
-        if let flow = origin as? Flow, let container = target as? Container {
-            return filledBy(flow) == nil
-        }
-        if let flow = target as? Flow, let container = origin as? Container {
-            return drainedBy(flow) == nil
-        }
-        
-        // TODO: Write more rules.
-        
-        return true
+    public func canConnect(from origin: Node, to target: Node, as type: LinkType = .parameter) -> Bool {
+        fatalError("Not implemented: \(#function)")
     }
     
     /// Connects two nodes.
@@ -214,36 +224,25 @@ public class Model {
     /// - Note: This method is not validating whether the connection is valid or
     /// not. It might make the model inconsistent
     ///
-    public func connect(from origin: Node, to target: Node, as type: LinkType = .parameter, labels: LabelSet = []) {
+    @discardableResult
+    public func connect(from origin: Node, to target: Node, as type: LinkType = .parameter, labels: LabelSet = []) -> Link {
         // TODO: Rename this to "connectParameter"
+        // FIXME: Validate
         let id = idSequence.next()
         
         let finalLabels = Set([type.rawValue] + labels)
         
-        graph.connect(from: origin, to: target, labels: finalLabels, id: id)
+        return graph.connect(from: origin, to: target, labels: finalLabels, id: id)
     }
 
     /// Connects two nodes as flows.
     ///
-    public func connectFlow(from origin: Node, to target: Node) {
-        if let flow = origin as? Flow, let container = target as? Container {
-            guard filledBy(flow) == nil else {
-                fatalError("Flow \(flow) is already filling a node \(filledBy(flow)!)")
-            }
-        }
-        if let flow = target as? Flow, let container = origin as? Container {
-            guard drainedBy(flow) == nil else {
-                fatalError("Flow \(flow) is already draining a node \(drainedBy(flow)!)")
-            }
-        }
-        
-        connect(from: origin, to: target, as: .flow)
+    @discardableResult
+    public func connectFlow(from origin: Node, to target: Node) -> Link {
+        // FIXME: Validate
+        return connect(from: origin, to: target, as: .flow)
     }
 
-    func __setupContstraints() {
-        
-    }
-    
 
     // Add container
     // Remove container

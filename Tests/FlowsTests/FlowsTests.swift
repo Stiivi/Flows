@@ -42,10 +42,9 @@ final class FlowsTests: XCTestCase {
         model.add(Transform(name: "x", expression: "2" ))
 
         model.add(Flow(name: "f", expression: "x"))
-        model.connect(from: model["a"]!, to: model["f"]!, as: .flow)
-        model.connect(from: model["f"]!, to: model["b"]!, as: .flow)
-
-        model.connect(from: model["x"]!, to: model["f"]!, as: .flow)
+        model.connectFlow(from: model["a"]!, to: model["f"]!)
+        model.connectFlow(from: model["f"]!, to: model["b"]!)
+        model.connect(from: model["x"]!, to: model["f"]!, as: .parameter)
         
         let simulator = Simulator(model: model)
 

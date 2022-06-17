@@ -7,18 +7,19 @@ public class ExpressionNode: Node {
     /// Arithmetic expression
     var expression: Expression
     
-    init(name: String, expression: Expression) {
+    init(name: String, expression: Expression, labels: LabelSet = []) {
         self.name = name
         self.expression = expression
-        super.init(labels: [Model.ExpressionLabel])
+        super.init(labels: Set([Model.ExpressionLabel]).union(labels))
     }
     
-    init(name: String, expressionString: String) {
+    init(name: String, expressionString: String, labels: LabelSet = []) {
         guard let expression = Parser(string: expressionString).parse() else {
             fatalError("Invalid expression: '\(expressionString)'")
         }
         self.name = name
         self.expression = expression
+        super.init(labels: labels)
     }
     
     public static func ==(lhs: ExpressionNode, rhs: ExpressionNode) -> Bool {

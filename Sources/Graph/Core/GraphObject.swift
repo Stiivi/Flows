@@ -65,7 +65,6 @@ open class GraphObject: Identifiable, CustomStringConvertible {
         return labels.isSubset(of: self.labels)
     }
 
-    
     /// Sets object label.
     public func set(label: Label) {
         labels.insert(label)

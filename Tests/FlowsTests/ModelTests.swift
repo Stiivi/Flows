@@ -20,6 +20,7 @@ final class ModelTests: XCTestCase {
         model.add(node)
         
         XCTAssertIdentical(model.containers.first, node)
+        XCTAssertTrue(node.contains(label: "stock"))
     }
 
     func testAddFormula() throws {
@@ -28,6 +29,7 @@ final class ModelTests: XCTestCase {
         model.add(node)
         
         XCTAssertIdentical(model.formulas.first, node)
+        XCTAssertTrue(node.contains(label: "converter"))
     }
 
     func testAddFlow() throws {
@@ -38,6 +40,7 @@ final class ModelTests: XCTestCase {
         XCTAssertIdentical(model.flows.first, flow)
         XCTAssertNil(model.drainedBy(flow))
         XCTAssertNil(model.filledBy(flow))
+        XCTAssertTrue(flow.contains(label: "flow"))
     }
 
     func testConnectFlow() throws {
@@ -60,6 +63,81 @@ final class ModelTests: XCTestCase {
         
         XCTAssertIdentical(model.drainedBy(flow), input)
         XCTAssertIdentical(model.filledBy(flow), output)
+    }
+    
+    func testSingleInflow() {
+        // NOTE: Sync with testSingleOutflow()
+        let model = Model()
+        let flow = Flow(name: "flow", expression: "0")
+        let stock1 = Container(name: "one", float: 0)
+        let stock2 = Container(name: "two", float: 0)
+        model.add(flow)
+        model.add(stock1)
+        model.add(stock2)
+        
+        let violations1 = model.constraintChecker.check()
+        XCTAssertTrue(violations1.isEmpty)
+        
+        // We connect the first flow
+        model.connectFlow(from: stock1, to: flow)
+        let violations2 = model.constraintChecker.check()
+        XCTAssertTrue(violations2.isEmpty)
+
+        // We connect it as a parameter, not as a flow - should be OK
+        model.connect(from: stock1, to: flow, as: .parameter)
+        let violations3 = model.constraintChecker.check()
+        XCTAssertTrue(violations3.isEmpty)
+        
+        model.connectFlow(from: stock2, to: flow)
+        let violations4 = model.constraintChecker.check()
+        XCTAssertFalse(violations4.isEmpty)
+        XCTAssertEqual(violations4.first!.name, "single_inflow_origin")
+    }
+
+    func testSingleOutflow() {
+        // NOTE: Sync with testSingleInflow()
+        let model = Model()
+        let flow = Flow(name: "flow", expression: "0")
+        let stock1 = Container(name: "one", float: 0)
+        let stock2 = Container(name: "two", float: 0)
+        model.add(flow)
+        model.add(stock1)
+        model.add(stock2)
+        
+        let violations1 = model.constraintChecker.check()
+        XCTAssertTrue(violations1.isEmpty)
+        
+        model.connectFlow(from: flow, to: stock1)
+        let violations2 = model.constraintChecker.check()
+        XCTAssertTrue(violations2.isEmpty)
+
+        model.connect(from: flow, to: stock1, as: .parameter)
+        let violations3 = model.constraintChecker.check()
+        XCTAssertTrue(violations3.isEmpty)
+
+        model.connectFlow(from: flow, to: stock2)
+        let violations4 = model.constraintChecker.check()
+        XCTAssertFalse(violations4.isEmpty)
+        XCTAssertEqual(violations4.first!.name, "single_outflow_target")
+    }
+
+    
+    func testConnectFlowToFlow() throws {
+        let model = Model()
+        let leftFlow = Flow(name: "left", expression: "0")
+        let rightFlow = Flow(name: "right", expression: "0")
+        
+        model.add(leftFlow)
+        model.add(rightFlow)
+        model.connectFlow(from: leftFlow, to: rightFlow)
+        
+        let violations = model.constraintChecker.check()
+
+        XCTAssertEqual(violations.count, 1)
+            
+        let violation = violations.first!
+        
+        XCTAssertEqual(violation.name, "forbidden_flow_to_flow")
     }
     
 

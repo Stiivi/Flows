@@ -47,6 +47,18 @@ open class Node: GraphObject {
         return graph!.neighbours(self)
     }
     
+    /// Returns links that match the selector `selector`.
+    public func linksWithSelector(_ selector: LinkSelector) -> [Link] {
+        // TODO: Find a better name
+        let links: [Link]
+        switch selector.direction {
+        case .incoming: links = self.incoming
+        case .outgoing: links = self.outgoing
+        }
+        
+        return links.filter { $0.contains(label: selector.label) }
+    }
+    
     /// Connects the node to a `target` with optional attributes to be set
     /// on the newly created link.
     ///

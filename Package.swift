@@ -40,5 +40,8 @@ let package = Package(
         .testTarget(
             name: "FlowsTests",
             dependencies: ["Flows"]),
+        .testTarget(
+            name: "GraphTests",
+            dependencies: ["Graph"]),
     ]
 )

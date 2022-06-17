@@ -49,16 +49,9 @@ public struct LinkSelector {
         self.direction = direction
     }
     
-    /// Return a list of links associated with the node that match the selector.
-    // TODO: Equivalent exists in NodeProjection.links, one should go
+    // FIXME: Deprecated
     public func links(with node: Node) -> [Link] {
-        let links: [Link]
-        switch direction {
-        case .incoming: links = node.incoming
-        case .outgoing: links = node.outgoing
-        }
-        
-        return links.filter { $0.contains(label: label) }
+        fatalError("Method \(#function) has been moved to Node.linksWithSelector(:)")
     }
 
     /// Returns endpoint of the link based on the direction. Returns link's

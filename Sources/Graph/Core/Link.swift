@@ -5,7 +5,6 @@
 //  Created by Stefan Urbanek on 2021/10/20.
 //
 
-
 /// Link represents a graph edge - conection between two nodes.
 ///
 /// The links in the graph have an origin node and a target node associated
