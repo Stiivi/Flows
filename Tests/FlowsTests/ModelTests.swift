@@ -75,21 +75,21 @@ final class ModelTests: XCTestCase {
         model.add(stock1)
         model.add(stock2)
         
-        let violations1 = model.constraintChecker.check()
+        let violations1 = model.constraintChecker.check(graph: model.graph)
         XCTAssertTrue(violations1.isEmpty)
         
         // We connect the first flow
         model.connectFlow(from: stock1, to: flow)
-        let violations2 = model.constraintChecker.check()
+        let violations2 = model.constraintChecker.check(graph: model.graph)
         XCTAssertTrue(violations2.isEmpty)
 
         // We connect it as a parameter, not as a flow - should be OK
         model.connect(from: stock1, to: flow, as: .parameter)
-        let violations3 = model.constraintChecker.check()
+        let violations3 = model.constraintChecker.check(graph: model.graph)
         XCTAssertTrue(violations3.isEmpty)
         
         model.connectFlow(from: stock2, to: flow)
-        let violations4 = model.constraintChecker.check()
+        let violations4 = model.constraintChecker.check(graph: model.graph)
         XCTAssertFalse(violations4.isEmpty)
         XCTAssertEqual(violations4.first!.name, "single_inflow_origin")
     }
@@ -104,19 +104,19 @@ final class ModelTests: XCTestCase {
         model.add(stock1)
         model.add(stock2)
         
-        let violations1 = model.constraintChecker.check()
+        let violations1 = model.constraintChecker.check(graph: model.graph)
         XCTAssertTrue(violations1.isEmpty)
         
         model.connectFlow(from: flow, to: stock1)
-        let violations2 = model.constraintChecker.check()
+        let violations2 = model.constraintChecker.check(graph: model.graph)
         XCTAssertTrue(violations2.isEmpty)
 
         model.connect(from: flow, to: stock1, as: .parameter)
-        let violations3 = model.constraintChecker.check()
+        let violations3 = model.constraintChecker.check(graph: model.graph)
         XCTAssertTrue(violations3.isEmpty)
 
         model.connectFlow(from: flow, to: stock2)
-        let violations4 = model.constraintChecker.check()
+        let violations4 = model.constraintChecker.check(graph: model.graph)
         XCTAssertFalse(violations4.isEmpty)
         XCTAssertEqual(violations4.first!.name, "single_outflow_target")
     }
@@ -131,7 +131,7 @@ final class ModelTests: XCTestCase {
         model.add(rightFlow)
         model.connectFlow(from: leftFlow, to: rightFlow)
         
-        let violations = model.constraintChecker.check()
+        let violations = model.constraintChecker.check(graph: model.graph)
 
         XCTAssertEqual(violations.count, 1)
             

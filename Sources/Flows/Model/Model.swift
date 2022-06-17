@@ -68,8 +68,7 @@ public class Model {
         self.graph = graph ?? Graph()
     
         constraintChecker = ConstraintChecker(
-            graph: self.graph,
-            nodeConstraints: [
+            constraints: [
                 NodeConstraint(
                     name: "single_outflow_target",
                     match: LabelPredicate(all: "flow"),
@@ -79,9 +78,7 @@ public class Model {
                     name: "single_inflow_origin",
                     match: LabelPredicate(all: "flow"),
                     requirement: UniqueNeighbourRequirement("flow", direction: .incoming)
-                )
-            ],
-            linkConstraints: [
+                ),
                 LinkConstraint(
                     name: "forbidden_flow_to_flow",
                     match: LinkObjectPredicate(

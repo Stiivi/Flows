@@ -87,7 +87,7 @@ extension Model {
         var errors: [ModelError] = []
         
         
-        let violations = constraintChecker.check()
+        let violations = constraintChecker.check(graph: graph)
         if !violations.isEmpty {
             for violation in violations {
                 let text = String(describing: violation)

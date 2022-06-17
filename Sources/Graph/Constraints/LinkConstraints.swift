@@ -7,7 +7,7 @@
 
 // TODO: Merge with NodeConstraint
 
-public class LinkConstraint {
+public class LinkConstraint: Constraint {
     public let name: String
     public let match: LinkPredicate
     public let requirement: LinkConstraintRequirement

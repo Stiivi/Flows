@@ -9,9 +9,10 @@ import Foundation
 
 public struct ConstraintViolation: CustomStringConvertible {
     // TODO: Use constraint reference instead of just a name
-    public let name: String
+    public let constraint: Constraint
     public let objects: [GraphObject]
-    
+
+    public var name: String { constraint.name }
     public var description: String {
         "ConstraintViolation(\(name), \(objects))"
     }
@@ -20,46 +21,29 @@ public struct ConstraintViolation: CustomStringConvertible {
 public class ConstraintChecker {
     // TODO: Dissolve this class back into Model?
     // TODO: This is a separate class to make thinking about the problem more explicit
-    // TODO: Remove graph, use check(graph:)
+    // TODO: Maybe convert to: extension Array where Element == Constraint
+
+    let constraints: [Constraint]
     
-    let graph: Graph
-    let nodeConstraints: [NodeConstraint]
-    let linkConstraints: [LinkConstraint]
-    
-    public init(graph: Graph, nodeConstraints: [NodeConstraint]=[], linkConstraints: [LinkConstraint]=[]) {
-        self.graph = graph
-        self.nodeConstraints = nodeConstraints
-        self.linkConstraints = linkConstraints
+    public init(constraints: [Constraint]) {
+        self.constraints = constraints
     }
     
-    public func check() -> [ConstraintViolation] {
-        let nodeViolations: [ConstraintViolation]
-        let linkViolations: [ConstraintViolation]
+    public func check(graph: Graph) -> [ConstraintViolation] {
+        let violations: [ConstraintViolation]
         
-        nodeViolations = nodeConstraints.compactMap {
+        violations = constraints.compactMap {
             let violators = $0.check(graph)
             
             if violators.isEmpty {
                 return nil
             }
             else {
-                return ConstraintViolation(name: $0.name, objects: violators)
+                return ConstraintViolation(constraint: $0, objects: violators)
             }
             
         }
 
-        linkViolations = linkConstraints.compactMap {
-            let violators = $0.check(graph)
-            
-            if violators.isEmpty {
-                return nil
-            }
-            else {
-                return ConstraintViolation(name: $0.name, objects: violators)
-            }
-            
-        }
-
-        return nodeViolations + linkViolations
+        return violations
     }
 }
