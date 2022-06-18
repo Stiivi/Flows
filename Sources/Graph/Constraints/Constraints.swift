@@ -60,7 +60,7 @@ public class AcceptAll: ObjectConstraintRequirement {
     }
    
     public func check(objects: [GraphObject]) -> [GraphObject] {
-        /// We reject whatever comes in
+        // We reject whatever comes in
         return []
     }
 }
@@ -68,16 +68,11 @@ public class AcceptAll: ObjectConstraintRequirement {
 /// Check all non-nil properties
 public class UniqueProperty<Value>: ObjectConstraintRequirement
         where Value: Hashable {
-//    public var path: KeyPath<GraphObject, Value>
     public var extract: (GraphObject) -> Value?
     
     public init(_ extract: @escaping (GraphObject) -> Value?) {
         self.extract = extract
     }
-//    init(_ test: (GraphObject) -> some Equatable) {
-//        self.test = test
-//    }
-//
     
     public func check(objects: [GraphObject]) -> [GraphObject] {
         var seen: [Value:Array<GraphObject>] = [:]
@@ -100,7 +95,6 @@ public class UniqueProperty<Value>: ObjectConstraintRequirement
         }.flatMap {
             $0.value
         }
-        /// We reject whatever comes in
         return duplicates
     }
 }
@@ -125,4 +119,3 @@ public class ObjectConstraint: Constraint {
         return violating
     }
 }
-

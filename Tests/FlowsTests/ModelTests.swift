@@ -38,8 +38,8 @@ final class ModelTests: XCTestCase {
         model.add(flow)
         
         XCTAssertIdentical(model.flows.first, flow)
-        XCTAssertNil(model.drainedBy(flow))
-        XCTAssertNil(model.filledBy(flow))
+        XCTAssertNil(flow.drains)
+        XCTAssertNil(flow.fills)
         XCTAssertTrue(flow.contains(label: "flow"))
     }
 
@@ -61,8 +61,8 @@ final class ModelTests: XCTestCase {
         XCTAssertEqual(model.inflows(output), [flow])
         XCTAssertEqual(model.outflows(output), [])
         
-        XCTAssertIdentical(model.drainedBy(flow), input)
-        XCTAssertIdentical(model.filledBy(flow), output)
+        XCTAssertIdentical(flow.drains, input)
+        XCTAssertIdentical(flow.fills, output)
     }
     
     func testSingleInflow() {

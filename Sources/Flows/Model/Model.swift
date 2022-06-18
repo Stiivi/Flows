@@ -61,50 +61,8 @@ public class Model {
     
     public init(graph: Graph? = nil) {
         self.graph = graph ?? Graph()
-    
-        constraintChecker = ConstraintChecker(
-            constraints: [
-                NodeConstraint(
-                    name: "single_outflow_target",
-                    match: LabelPredicate(all: "flow"),
-                    requirement: UniqueNeighbourRequirement("flow", direction: .outgoing)
-                ),
-                NodeConstraint(
-                    name: "single_inflow_origin",
-                    match: LabelPredicate(all: "flow"),
-                    requirement: UniqueNeighbourRequirement("flow", direction: .incoming)
-                ),
-                NodeConstraint(
-                    // Inflow of a stock node must be different from the outflow
-                    // TODO: Remove the model requirement
-                    name: "different_drain_fill",
-                    match: SameDrainFill(model: self),
-                    requirement: RejectAll()
-                ),
-                NodeConstraint(
-                    name: "unique_node_name",
-                    match: LabelPredicate(any: "flow", "node", "stock"),
-                    requirement: UniqueProperty<String> {
-                        if let node = $0 as? ExpressionNode {
-                            return node.name
-                        }
-                        else {
-                            return nil
-                        }
-                    }
-                ),
-                LinkConstraint(
-                    name: "forbidden_flow_to_flow",
-                    match: LinkObjectPredicate(
-                        origin: LabelPredicate(all: "flow"),
-                        target: LabelPredicate(all: "flow"),
-                        link: LabelPredicate(all: "flow")
-                    ),
-                    requirement: RejectAll()
-                )
-            ]
-            
-        )
+        
+        constraintChecker = ConstraintChecker(constraints: ModelConstraints)
     }
        
     // MARK: - Query
@@ -117,28 +75,6 @@ public class Model {
     /// Return all incoming links to a node
     public func incoming(_ node: Node) -> [Link] {
         return graph.incoming(node)
-    }
-
-    /// Returns a stock that is drained by the flow – that is a stock
-    /// to which the flow is an outflow. Returns `nil` if
-    /// no stock is being drained by the given flow.
-    ///
-    func drainedBy(_ flow: Flow) -> Stock? {
-        let link = flowLinks.first {
-            $0.target === flow && ($0.origin as? Stock != nil)
-        }
-        return (link?.origin as? Stock)
-    }
-
-    /// Returns a stock that is filled by the flow – that is a stock
-    /// to which the flow is an inflow. Returns `nil` if
-    /// no stock is being drained by the given flow.
-    ///
-    func filledBy(_ flow: Flow) -> Stock? {
-        let link = flowLinks.first {
-            $0.origin === flow && ($0.target as? Stock != nil)
-        }
-        return (link?.target as? Stock)
     }
 
     /// List of flows flowing into a stock.

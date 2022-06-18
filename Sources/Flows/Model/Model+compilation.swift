@@ -11,25 +11,6 @@ public enum ModelCompilationError: Error {
     case validation([ModelError])
 }
 
-/// Predicate that matches flow nodes with the same drain and fill stocks
-public class SameDrainFill: NodePredicate {
-    // TODO: Be free from the model, rethink the inflow/outflow model methods
-    let model: Model
-    
-    public init(model: Model) {
-        self.model = model
-    }
-    
-    public func match(_ node: Node) -> Bool {
-        guard let flow = node as? Flow else {
-            return false
-        }
-        
-        let node = model.drainedBy(flow)
-        return node != nil && model.drainedBy(flow) === model.filledBy(flow)
-    }
-}
-
 extension Model {
     func compile() throws -> CompiledModel {
         let errors = validate()
