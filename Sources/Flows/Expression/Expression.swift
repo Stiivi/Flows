@@ -52,15 +52,31 @@ public indirect enum Expression: Hashable {
             hasher.combine(op)
             hasher.combine(lhs)
             hasher.combine(rhs)
-        case let .unary(op, expr):
+        case let .unary(op, operand):
             hasher.combine(op)
-            hasher.combine(expr)
-        case let .function(f, exprs):
+            hasher.combine(operand)
+        case let .function(f, arguments):
             hasher.combine(f)
-            hasher.combine(exprs)
+            hasher.combine(arguments)
         }
     }
 
+    /// List of all variables that the expression and its children reference
+    public var referencedVariables: [String] {
+        switch self {
+        case .null: return []
+        case .value(_): return []
+        case let .variable(name):
+            return [name]
+        case let .binary(_, lhs, rhs):
+            return lhs.referencedVariables + rhs.referencedVariables
+        case let .unary(_, expr):
+            return expr.referencedVariables
+        case let .function(_, arguments):
+            return arguments.flatMap { $0.referencedVariables }
+        }
+    }
+    
 }
 
 public func ==(left: Expression, right: Expression) -> Bool {

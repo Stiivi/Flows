@@ -7,8 +7,10 @@
 
 import Foundation
 
+// Alias: auxiliary, expression, constant, variable, ...
+
 public class Transform: ExpressionNode {
     public init(name: String, expression: String) {
-        super.init(name: name, expressionString: expression, labels: ["converter"])
+        super.init(name: name, expression: expression, labels: ["converter"])
     }
 }

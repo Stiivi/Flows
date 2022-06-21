@@ -7,10 +7,27 @@
 
 import Foundation
 
-enum LexerError: Error, Equatable {
+public enum ParserError: Error, Equatable, CustomStringConvertible {
     case invalidCharacterInNumber
     case unexpectedCharacter
+    case missingRightParenthesis
+    case expressionExpected
+    case unexpectedToken
+    case emptyString
+    
+    public var description: String {
+        switch self {
+        case .invalidCharacterInNumber: return "Invalid character in a number"
+        case .unexpectedCharacter: return "Unexpected character"
+        case .missingRightParenthesis: return "Right parenthesis ')' expected"
+        case .expressionExpected: return "Expected expression"
+        case .unexpectedToken: return "Unexpected token"
+        case .emptyString: return "Empty expression string"
+        }
+    }
 }
+
+
 
 enum TokenType: Equatable {
     case empty
@@ -21,50 +38,123 @@ enum TokenType: Equatable {
     case leftParen
     case rightParen
     case comma
-    case error(LexerError)
+    case error(ParserError)
 }
 
 struct Token {
     let type: TokenType
-    let location: Int
+    let location: Lexer.Location
+    let startIndex: String.Index
+    let endIndex: String.Index
+    
+    /// Flag whether the lexer has seen a whitespace before the token
+    let seenWhitespace: Bool
     let text: String
 }
 
 // TODO: Use drop(while:)
 
 class Lexer {
-    var iterator: String.Iterator
-    var currentChar: Character?
-    var location: Int
+    var string: String
+    var currentIndex: String.Index
     
-    var start: Int
-    var text: String
+    var currentChar: Character?
+    
+    var location: Location
+    
+    /// Token start index
+    var startIndex: String.Index
+    var endIndex: String.Index
+    
+    var text: Substring {
+        string[startIndex..<currentIndex]
+    }
+    
     var seenWhitespace: Bool = false
     
+    /// Location within a text.
+    public struct Location: CustomStringConvertible {
+        /// Line number in human representation, starting with 1.
+        var line: Int = 1
+        
+        /// Column number in human representation, starting with 1 for the
+        /// leftmost column.
+        var column: Int = 1
+
+        /// Advances the location by one character.
+        ///
+        /// - Parameters:
+        ///     - newLine: if `true` then we are advancing to the new line and
+        ///       resetting the column to 1.
+        ///
+        mutating func advance(_ character: Character) {
+            if character.isNewline {
+                column = 1
+                line += 1
+            }
+            else {
+                column += 1
+            }
+        }
+
+        public var description: String {
+            return "\(line):\(column)"
+        }
+    }
+    
+    
     init(string: String) {
-        self.iterator = string.makeIterator()
-        location = 0
-        start = 0
-        text = ""
-        advance()
+        self.string = string
+        currentIndex = string.startIndex
+        startIndex = currentIndex
+        endIndex = currentIndex
+        
+        if string.startIndex < string.endIndex {
+            currentChar = string[currentIndex]
+        }
+        else {
+            currentChar = nil
+        }
+        
+        location = Location()
     }
     
     var atEnd: Bool {
-        return currentChar == nil
+        return currentIndex == string.endIndex
     }
     
     func advance() {
-        currentChar = iterator.next()
-        if currentChar != nil {
-            location += 1
+        guard !atEnd else {
+            return
+        }
+        
+        // Advance current index and current character
+        //
+        currentIndex = string.index(after: currentIndex)
+
+        if currentIndex < string.endIndex {
+            currentChar = string[currentIndex]
+            location.advance(currentChar!)
+        }
+        else {
+            currentChar = nil
         }
     }
     
+    func makeToken(type: TokenType) -> Token {
+        return Token(type: type,
+                     location: location,
+                     startIndex: startIndex,
+                     endIndex: currentIndex,
+                     seenWhitespace: seenWhitespace,
+                     text: String(text))
+    }
+    
     func accept() {
-        guard let char = currentChar else {
+        guard currentChar != nil else {
             fatalError("Accepting without current character")
         }
-        text += String(char)
+        endIndex = currentIndex
         advance()
     }
     
@@ -93,9 +183,10 @@ class Lexer {
         }
     }
     
-    func acceptNumber() -> Token? {
+    func acceptNumber() -> TokenType? {
         var type: TokenType = .int
-        guard accept(\.isWholeNumber) else {
+        
+        if !accept(\.isWholeNumber) {
             return nil
         }
 
@@ -106,10 +197,7 @@ class Lexer {
         if accept(".") {
             // At least one number after the decimal point
             if !accept(\.isWholeNumber) {
-                return Token(type: .error(.invalidCharacterInNumber),
-                             location: start,
-                             text: text
-                )
+                return .error(.invalidCharacterInNumber)
             }
             while accept(\.isWholeNumber) || accept("_") {
                 // Just accept it
@@ -123,10 +211,7 @@ class Lexer {
             // At least one number after the decimal point
             accept("-")
             if !accept(\.isWholeNumber) {
-                return Token(type: .error(.invalidCharacterInNumber),
-                             location: start,
-                             text: text
-                )
+                return .error(.invalidCharacterInNumber)
             }
             while accept(\.isWholeNumber) || accept("_") {
                 // Just accept it
@@ -135,20 +220,14 @@ class Lexer {
         }
         
         if accept(\.isLetter) {
-            return Token(type: .error(.invalidCharacterInNumber),
-                         location: start,
-                         text: text
-            )
+            return .error(.invalidCharacterInNumber)
         }
         else {
-            return Token(type: type,
-                         location: start,
-                         text: text
-            )
+            return type
         }
     }
     
-    func acceptIdentifier() -> Token? {
+    func acceptIdentifier() -> TokenType? {
         guard accept(\.isLetter) || accept("_") else {
             return nil
         }
@@ -157,36 +236,27 @@ class Lexer {
             // Just accept it
         }
         
-        return Token(type: .identifier, location: start, text: text)
+        return .identifier
     }
 
-    func acceptOperator() -> Token? {
-        if accept("-") {
-//            if let maybeNumber = acceptNumber() {
-//                return maybeNumber
-//            }
-//            else {
-                return Token(type: .operator, location: start, text: text)
-//            }
-            // FIXME: Deal with negative integer and/or unary minus
-        }
-        else if accept("+") || accept("*") || accept("/") || accept("%") {
-            return Token(type: .operator, location: start, text: text)
+    func acceptOperator() -> TokenType? {
+        if accept("-") || accept("+") || accept("*") || accept("/") || accept("%") {
+            return .operator
         }
         else {
             return nil
         }
     }
 
-    func acceptPunctuation() -> Token? {
+    func acceptPunctuation() -> TokenType? {
         if accept("(") {
-            return Token(type: .leftParen, location: start, text: text)
+            return .leftParen
         }
         else if accept(")") {
-            return Token(type: .rightParen, location: start, text: text)
+            return .rightParen
         }
         else if accept(",") {
-            return Token(type: .comma, location: start, text: text)
+            return .comma
         }
         else {
             return nil
@@ -201,27 +271,32 @@ class Lexer {
         }
 
         guard !atEnd else {
-            return Token(type: .empty, location: start, text: "")
+            return makeToken(type: .empty)
         }
 
-        start = location
-        text = ""
+        startIndex = currentIndex
                 
-        if let token = acceptNumber()
+        if let type = acceptNumber()
                         ?? acceptIdentifier()
                         ?? acceptOperator()
                         ?? acceptPunctuation() {
-            return token
+            return makeToken(type: type)
         }
         else {
             accept()
-            return Token(type: .error(.unexpectedCharacter), location: start, text: text)
+            return makeToken(type: .error(.unexpectedCharacter))
         }
     }
 }
 
 // https://craftinginterpreters.com/parsing-expressions.html
 // https://stackoverflow.com/questions/2245962/writing-a-parser-like-flex-bison-that-is-usable-on-8-bit-embedded-systems/2336769#2336769
+
+enum ASTNode {
+    case identifier(String)
+    case number(String)
+    case call(String, [ASTNode])
+}
 
 class Parser {
     let lexer: Lexer
@@ -294,7 +369,7 @@ class Parser {
     
     // variable_call -> IDENTIFIER ["(" ARGUMENTS ")"]
     
-    func variable_call() -> Expression? {
+    func variable_call() throws -> Expression? {
         guard let ident = identifier() else {
             return nil
         }
@@ -303,13 +378,13 @@ class Parser {
             var arguments: [Expression] = []
             if accept(.rightParen) == nil {
                 repeat {
-                    if let arg = expression() {
+                    if let arg = try expression() {
                         arguments.append(arg)
                     }
                 } while accept(.comma) != nil
             }
             if accept(.rightParen) == nil {
-                fatalError("Expected ')' after arguments")
+                throw ParserError.missingRightParenthesis
             }
             return .function(ident, arguments)
         }
@@ -321,18 +396,18 @@ class Parser {
     
     // primary -> NUMBER | STRING | VARIABLE_CALL | "(" expression ")" ;
 
-    func primary() -> Expression? {
+    func primary() throws -> Expression? {
         // TODO: true, false, nil
         if let value = number() {
             return .value(value)
         }
-        else if let expr = variable_call() {
+        else if let expr = try variable_call() {
             return expr
         }
         if accept(.leftParen) != nil {
-            let expr = expression()
+            let expr = try expression()
             if accept(.rightParen) == nil {
-                fatalError("Expected ')'")
+                throw ParserError.missingRightParenthesis
             }
             return expr
         }
@@ -341,16 +416,16 @@ class Parser {
     
     // unary -> "-" unary | primary ;
     //
-    func unary() -> Expression? {
+    func unary() throws -> Expression? {
         // TODO: Add '!'
         if let op = `operator`("-") {
-            guard let right = unary() else {
-                fatalError("Expected expression")
+            guard let right = try unary() else {
+                throw ParserError.expressionExpected
             }
             return .unary(op, right)
         }
         else {
-            return primary()
+            return try primary()
         }
         
     }
@@ -358,14 +433,14 @@ class Parser {
     // factor -> unary ( ( "/" | "*" ) unary )* ;
     //
 
-    func factor() -> Expression? {
-        guard var expr = unary() else {
+    func factor() throws -> Expression? {
+        guard var expr = try unary() else {
             return nil
         }
         
         while let op = `operator`("*") ?? `operator`("/") ?? `operator`("%"){
-            guard let right = unary() else {
-                fatalError("Expected factor")
+            guard let right = try unary() else {
+                throw ParserError.expressionExpected
             }
             expr = .binary(op, expr, right)
         }
@@ -375,14 +450,14 @@ class Parser {
 
     // term -> factor ( ( "-" | "+" ) factor )* ;
     //
-    func term() -> Expression? {
-        guard var expr = factor() else {
+    func term() throws -> Expression? {
+        guard var expr = try factor() else {
             return nil
         }
         
         while let op = `operator`("+") ?? `operator`("-") {
-            guard let right = factor() else {
-                fatalError("Expected factor")
+            guard let right = try factor() else {
+                throw ParserError.expressionExpected
             }
             expr = .binary(op, expr, right)
         }
@@ -390,17 +465,20 @@ class Parser {
         return expr
     }
     
-    func expression() -> Expression? {
-        return term()
+    func expression() throws -> Expression? {
+        return try term()
     }
     
     
-    public func parse() -> Expression? {
-        let expr = expression()
+    public func parse() throws -> Expression {
+        guard let expr = try expression() else {
+            throw ParserError.emptyString
+        }
         
         if currentToken?.type != .empty {
-            fatalError("Unexpected token: \(String(describing: currentToken))")
+            throw ParserError.unexpectedToken
         }
         return expr
     }
+    
 }

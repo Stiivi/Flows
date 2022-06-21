@@ -7,9 +7,28 @@
 
 import Graph
 
+
+
+public enum __ModelError {
+    case expressionError // Add expression compilation details
+    case unusedInput(String)
+    case unknownParameter(String)
+    case constraintViolation(ConstraintViolation)
+    case cycle
+}
+
+struct __NewModelError {
+    let primaryNode: Node?
+    let relatedNodes: [Node]
+    
+    let error: __ModelError
+}
+
+
 public enum ModelError: Error, Equatable {
     /// Connected node is not used.
     case unusedInput(String, Node)
+    case unknownParameter(String, Node)
     
     /// Cycle in computation graph has been detected.
     case cycle(Node)

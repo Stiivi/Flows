@@ -10,11 +10,21 @@ import Foundation
 public struct ConstraintViolation: CustomStringConvertible {
     // TODO: Use constraint reference instead of just a name
     public let constraint: Constraint
+    
+    // FIXME: Split into links and nodes
     public let objects: [GraphObject]
 
     public var name: String { constraint.name }
     public var description: String {
         "ConstraintViolation(\(name), \(objects))"
+    }
+    
+    public var nodes:[Node] {
+        objects.compactMap { $0 as? Node }
+    }
+
+    public var links:[Link] {
+        objects.compactMap { $0 as? Link }
     }
 }
 

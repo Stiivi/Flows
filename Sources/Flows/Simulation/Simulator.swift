@@ -18,7 +18,8 @@ public class Simulator {
     public init(model: Model) {
         self.model = model
         do {
-            try self.compiledModel = model.compile()
+            let compiler = Compiler(model: model)
+            try self.compiledModel = compiler.compile()
         }
         catch {
             fatalError("Model compilation error: \(error)")
@@ -50,9 +51,9 @@ public class Simulator {
     func initialize() {
         let state = SimulationState()
         
-        for node in compiledModel.nodes {
+        for node in compiledModel.sortedNodes {
             do {
-                state.values[node.name] = try node.evaluate(state: state)
+                state.values[node.name] = try evaluate(node: node, state: state)
             }
             catch {
                 fatalError("Evaluation failed: \(error)")
@@ -65,9 +66,9 @@ public class Simulator {
     func evaluate() -> SimulationState {
         let state = SimulationState()
         
-        for node in model.expressionNodes {
+        for node in compiledModel.sortedNodes {
             do {
-                state.values[node.name] = try node.evaluate(state: last!)
+                state.values[node.name] = try evaluate(node: node, state: last!)
             }
             catch {
                 fatalError("Evaluation failed: \(error)")
@@ -75,6 +76,23 @@ public class Simulator {
         }
         
         return state
+    }
+    
+    func evaluate(node: CompiledExpressionNode, state: SimulationState) throws -> Float{
+        let evaluator = NumericExpressionEvaluator()
+        var functions: [String:FunctionProtocol] = [:]
+        
+        for function in allBuiltinFunctions {
+            functions[function.name] = function
+        }
+        evaluator.functions = functions
+        
+        for (key, value) in state.values {
+            evaluator.variables[key] = .float(value)
+        }
+
+        let value = try evaluator.evaluate(node.expression)
+        return value!.floatValue()!
     }
     
     func step(_ t: Int) -> SimulationState {

@@ -6,12 +6,15 @@
 //
 
 import Foundation
+
+
+// Alias: Accumulator, level, state, container, reservoir, pool
+
 public class Stock: ExpressionNode {
     public init(name: String, expression: String) {
-        super.init(name: name, expressionString: expression)
+        super.init(name: name, expression: expression)
     }
     public init(name: String, float value: Float) {
-        let expression = Expression.value(.float(value))
-        super.init(name: name, expression: expression, labels: ["stock"])
+        super.init(name: name, expression: String(value), labels: ["stock"])
     }
 }

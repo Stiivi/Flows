@@ -9,10 +9,6 @@ import XCTest
 @testable import Flows
 
 final class ModelTests: XCTestCase {
-    func testValidateEmpty() throws {
-        let model = Model()
-        XCTAssertTrue(model.validate().isEmpty)
-    }
 
     func testAddStock() throws {
         let model = Model()
@@ -140,7 +136,7 @@ final class ModelTests: XCTestCase {
         XCTAssertEqual(violation.name, "forbidden_flow_to_flow")
     }
     
-
+    
     func testConnectFlowSameStock() throws {
         let model = Model()
         let flow = Flow(name: "flow", expression: "0")
@@ -158,56 +154,27 @@ final class ModelTests: XCTestCase {
             
         let violation = violations.first!
         
-        XCTAssertEqual(violation.name, "different_drain_fill")
+        XCTAssertEqual(violation.name, "drain_and_fill_is_different")
     }
 
-    func testCompileEmpty() throws {
+    func testConnectFlowSameStockTrue() throws {
+        // This tests that it does not apply to parameters
         let model = Model()
-        // a -> b -> c
+        let flow = Flow(name: "flow", expression: "0")
+        let stock = Stock(name: "in", float: 100)
+
+        model.add(stock)
+        model.add(flow)
+
+        model.connect(from: stock, to: flow, as: .parameter)
+        model.connect(from: flow, to: stock, as: .parameter)
+        model.connect(from: flow, to: stock, as: .flow)
         
-        let c = Transform(name: "c", expression: "b")
-        model.add(c)
-
-        let b = Transform(name: "b", expression: "a")
-        model.add(b)
-
-        let a = Transform(name: "a", expression: "0")
-        model.add(a)
-
-        model.connect(from: a, to: b)
-        model.connect(from: b, to: c)
-
-        let cmodel = try model.compile()
-        XCTAssertIdentical(cmodel.nodes[0], a)
-        XCTAssertIdentical(cmodel.nodes[1], b)
-        XCTAssertIdentical(cmodel.nodes[2], c)
-    }
-    
-    func testCompileOne() throws {
-        let model = Model()
-        let cmodel = try model.compile()
-        
-        XCTAssertTrue(cmodel.nodes.isEmpty)
-    }
-
-    func testValidateDuplicateName() throws {
-        let model = Model()
-
-        let c1 = Stock(name: "things", float: 0)
-        let c2 = Stock(name: "things", float: 0)
-        model.add(c1)
-        model.add(c2)
-        model.add(Stock(name: "a", float: 0))
-        model.add(Stock(name: "b", float: 0))
-
         let violations = model.constraintChecker.check(graph: model.graph)
-        XCTAssertEqual(violations.count, 1)
-        let violation = violations.first!
-        
-        XCTAssertEqual(violation.name, "unique_node_name")
-        XCTAssertTrue(violation.objects.contains(c1))
-        XCTAssertTrue(violation.objects.contains(c2))
+
+        XCTAssertEqual(violations.count, 0)
     }
+
     
 //    func testValidateCycle() throws {
 //        let model = Model()

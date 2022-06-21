@@ -9,7 +9,6 @@ import Graph
 
 /// Predicate that matches flow nodes with the same drain and fill stocks
 public class SameDrainFill: NodePredicate {
-    // TODO: Be free from the model, rethink the inflow/outflow model methods
     // TODO: This requires re-introduction of "neighbourhoods" to the graph (see TarotKit)
     
     public init() {
@@ -60,8 +59,7 @@ let ModelConstraints: [Constraint] = [
     ),
     NodeConstraint(
         // Inflow of a stock node must be different from the outflow
-        // TODO: Remove the model requirement
-        name: "different_drain_fill",
+        name: "drain_and_fill_is_different",
         match: SameDrainFill(),
         requirement: RejectAll()
     ),

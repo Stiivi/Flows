@@ -7,12 +7,8 @@
 
 import Foundation
 public class Flow: ExpressionNode {
-    var expressionString: String
-    
-    public init(name: String,
-         expression: String){
-        self.expressionString = expression
-        super.init(name: name, expressionString: expression, labels: ["flow"])
+    public init(name: String, expression: String) {
+        super.init(name: name, expression: expression, labels: ["flow"])
     }
     
     /// Stock that the flow drains, if the flow input is connected.
@@ -22,7 +18,7 @@ public class Flow: ExpressionNode {
     ///
     public var drains: Stock? {
         let links = incoming.filter {
-            $0.origin as? Stock != nil
+            $0.contains(label:"flow") && $0.origin as? Stock != nil
         }
         
         // If we get multiple results then we pick arbitrarily "first". The model
@@ -44,11 +40,11 @@ public class Flow: ExpressionNode {
     ///
     public var fills: Stock? {
         let links = outgoing.filter {
-            $0.target as? Stock != nil
+            $0.contains(label:"flow") && $0.target as? Stock != nil
         }
         
         if let link = links.first {
-            return link.target as? Stock
+            return  link.target as? Stock
         }
         else {
             return nil
