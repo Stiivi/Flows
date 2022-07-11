@@ -2,7 +2,7 @@ import Graph
 
 public class ExpressionNode: Node {
     /// Name of the node
-    var name: String
+    public var name: String
     
     /// Arithmetic expression
     var expressionString: String

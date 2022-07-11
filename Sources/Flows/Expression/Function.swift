@@ -40,7 +40,7 @@ typealias FunctionImplementation = ([Value]) -> Value
 
 class NumericBinaryOperator: FunctionProtocol {
     
-    typealias Implementation = (Float, Float) -> Float
+    typealias Implementation = (Double, Double) -> Double
     
     let name: String
     let implementation: Implementation
@@ -82,17 +82,17 @@ class NumericBinaryOperator: FunctionProtocol {
             fatalError("Invalid number of arguments (\(arguments.count) to a binary operator.")
         }
 
-        let lhs = arguments[0].floatValue()!
-        let rhs = arguments[1].floatValue()!
+        let lhs = arguments[0].doubleValue()!
+        let rhs = arguments[1].doubleValue()!
 
         let result = implementation(lhs, rhs)
         
-        return .float(result)
+        return .double(result)
     }
 }
 
 class NumericUnaryOperator: FunctionProtocol {
-    typealias Implementation = (Float) -> Float
+    typealias Implementation = (Double) -> Double
     
     let name: String
     let implementation: Implementation
@@ -133,17 +133,17 @@ class NumericUnaryOperator: FunctionProtocol {
             fatalError("Invalid number of arguments (\(arguments.count) to a binary operator.")
         }
 
-        let operand = arguments[0].floatValue()!
+        let operand = arguments[0].doubleValue()!
 
         let result = implementation(operand)
         
-        return .float(result)
+        return .double(result)
     }
 }
 
 
 public class NumericFunction: FunctionProtocol {
-    public typealias Implementation = ([Float]) -> Float
+    public typealias Implementation = ([Double]) -> Double
     
     public let name: String
     let implementation: Implementation
@@ -197,11 +197,11 @@ public class NumericFunction: FunctionProtocol {
     /// - Precondition: Arguments must be float convertible.
     ///
     public func apply(_ arguments: [Value]) -> Value {
-        let floatArguments = arguments.map { $0.floatValue()! }
+        let floatArguments = arguments.map { $0.doubleValue()! }
 
         let result = implementation(floatArguments)
         
-        return .float(result)
+        return .double(result)
     }
 }
 

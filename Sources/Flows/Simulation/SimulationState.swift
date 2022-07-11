@@ -8,9 +8,14 @@
 import Foundation
 
 public class SimulationState {
-    var values: [String:Float] = [:]
+    public let step: Int
+    var values: [String:Double] = [:]
     
-    public subscript(name: String) -> Float? {
+    init(step: Int) {
+        self.step = step
+    }
+    
+    public subscript(name: String) -> Double? {
         get {
             return values[name]
         }

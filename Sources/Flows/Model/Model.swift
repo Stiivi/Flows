@@ -61,9 +61,9 @@ public class Model {
     
     var expressionNodes: [ExpressionNode] { graph.nodes.compactMap { $0 as? ExpressionNode } }
     
-    var stocks: [Stock] { graph.nodes.compactMap { $0 as? Stock } }
-    var flows: [Flow] { graph.nodes.compactMap { $0 as? Flow } }
-    var formulas: [Transform] { graph.nodes.compactMap { $0 as? Transform } }
+    public var stocks: [Stock] { graph.nodes.compactMap { $0 as? Stock } }
+    public var flows: [Flow] { graph.nodes.compactMap { $0 as? Flow } }
+    public var formulas: [Transform] { graph.nodes.compactMap { $0 as? Transform } }
 
     var flowLinks: [Link] {
         graph.links.filter { $0.contains(label: Model.FlowLabel) }

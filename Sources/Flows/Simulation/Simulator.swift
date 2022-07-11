@@ -12,6 +12,7 @@ public class Simulator {
     public let model: Model
     public let compiledModel: CompiledModel
     public var history: [SimulationState] = []
+    public var currentStep: Int = 0
     
     var last: SimulationState? { history.last }
     
@@ -39,9 +40,10 @@ public class Simulator {
             initialize()
         }
         
-        for t in 1...steps {
+        for _ in 1...steps {
             let state: SimulationState
-            state = step(t)
+            currentStep += 1
+            state = step()
             history.append(state)
         }
         return last!
@@ -49,7 +51,7 @@ public class Simulator {
     
     /// Initialize the simulation
     func initialize() {
-        let state = SimulationState()
+        let state = SimulationState(step: currentStep)
         
         for node in compiledModel.sortedNodes {
             do {
@@ -64,7 +66,7 @@ public class Simulator {
     }
     
     func evaluate() -> SimulationState {
-        let state = SimulationState()
+        let state = SimulationState(step: currentStep)
         
         for node in compiledModel.sortedNodes {
             do {
@@ -78,7 +80,7 @@ public class Simulator {
         return state
     }
     
-    func evaluate(node: CompiledExpressionNode, state: SimulationState) throws -> Float{
+    func evaluate(node: CompiledExpressionNode, state: SimulationState) throws -> Double {
         let evaluator = NumericExpressionEvaluator()
         var functions: [String:FunctionProtocol] = [:]
         
@@ -88,18 +90,20 @@ public class Simulator {
         evaluator.functions = functions
         
         for (key, value) in state.values {
-            evaluator.variables[key] = .float(value)
+            evaluator.variables[key] = .double(value)
         }
 
         let value = try evaluator.evaluate(node.expression)
-        return value!.floatValue()!
+        return value!.doubleValue()!
     }
     
-    func step(_ t: Int) -> SimulationState {
+    func step() -> SimulationState {
+        currentStep += 1
+        
         let newState = evaluate()
         
         for stock in model.stocks {
-            var delta: Float = 0
+            var delta: Double = 0
             
             for inflow in model.inflows(stock) {
                 delta += last![inflow.name]!
