@@ -13,7 +13,7 @@ final class ParserTests: XCTestCase {
     func testEmpty() {
         let parser = Parser(string: "")
         XCTAssertThrowsError(try parser.parse()) {
-            XCTAssertEqual($0 as! ParserError, ParserError.emptyString)
+            XCTAssertEqual($0 as! ParserError, ParserError.expressionExpected)
         }
     }
 
@@ -79,7 +79,7 @@ final class ParserTests: XCTestCase {
     func testErrorMissingParenthesis() throws {
         let parser = Parser(string: "(")
         XCTAssertThrowsError(try parser.parse()) {
-            XCTAssertEqual($0 as! ParserError, ParserError.missingRightParenthesis)
+            XCTAssertEqual($0 as! ParserError, ParserError.expressionExpected)
         }
     }
     func testErrorMissingParenthesisFunctionCall() throws {
@@ -121,5 +121,4 @@ final class ParserTests: XCTestCase {
             XCTAssertEqual($0 as! ParserError, ParserError.unexpectedToken)
         }
     }
-
 }

@@ -7,6 +7,8 @@
 
 // TODO: Merge with NodeConstraint
 
+/// Graph constraint for a link.
+///
 public class LinkConstraint: Constraint {
     public let name: String
     public let match: LinkPredicate

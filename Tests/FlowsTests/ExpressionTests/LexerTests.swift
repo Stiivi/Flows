@@ -16,7 +16,6 @@ final class LexerTests: XCTestCase {
         XCTAssertTrue(lexer.accept(\.isWhitespace))
         XCTAssertNil(lexer.currentChar)
         XCTAssertTrue(lexer.atEnd)
-        XCTAssertEqual(lexer.text, " ")
     }
     
     func testEmpty() throws {
@@ -160,6 +159,22 @@ final class LexerTests: XCTestCase {
         token = lexer.next()
         XCTAssertEqual(token.type, TokenType.int)
         XCTAssertEqual(token.text, "2")
+    }
+    
+    func testEmptyTrivia() throws {
+        let lexer = Lexer(string: "   ")
+        let token = lexer.next()
+        XCTAssertEqual(token.type, TokenType.empty)
+        XCTAssertEqual(token.text, "")
+        XCTAssertEqual(token.fullText, "   ")
+    }
+    
+    func testTrailingTrivia() throws {
+        let lexer = Lexer(string: "thing   ")
+        let token = lexer.next()
+        XCTAssertEqual(token.type, TokenType.identifier)
+        XCTAssertEqual(token.text, "thing")
+        XCTAssertEqual(token.trailingTrivia, "   ")
     }
 
 }

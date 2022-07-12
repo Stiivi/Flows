@@ -13,7 +13,6 @@ public enum ParserError: Error, Equatable, CustomStringConvertible {
     case missingRightParenthesis
     case expressionExpected
     case unexpectedToken
-    case emptyString
     
     public var description: String {
         switch self {
@@ -22,7 +21,6 @@ public enum ParserError: Error, Equatable, CustomStringConvertible {
         case .missingRightParenthesis: return "Right parenthesis ')' expected"
         case .expressionExpected: return "Expected expression"
         case .unexpectedToken: return "Unexpected token"
-        case .emptyString: return "Empty expression string"
         }
     }
 }
@@ -30,31 +28,45 @@ public enum ParserError: Error, Equatable, CustomStringConvertible {
 // https://craftinginterpreters.com/parsing-expressions.html
 // https://stackoverflow.com/questions/2245962/writing-a-parser-like-flex-bison-that-is-usable-on-8-bit-embedded-systems/2336769#2336769
 
-enum ASTNode {
-    case identifier(String)
-    case number(String)
-    case call(String, [ASTNode])
-}
 
-class Parser {
+public class Parser {
     let lexer: Lexer
     var currentToken: Token?
     
-    init(lexer: Lexer) {
+    /// Creates a new parser using an expression lexer.
+    ///
+    public init(lexer: Lexer) {
         self.lexer = lexer
-    }
-    
-    init(string: String) {
-        self.lexer = Lexer(string: string)
         advance()
     }
     
-    var atEnd: Bool { currentToken == nil }
+    /// Creates a new parser for an expression source string.
+    ///
+    public convenience init(string: String) {
+        self.init(lexer: Lexer(string: string))
+    }
     
+    /// True if the parser is at the end of the source.
+    public var atEnd: Bool {
+        if let token = currentToken {
+            return token.type == .empty
+        }
+        else {
+            return true
+        }
+    }
+    
+    /// Advance to the next token.
+    ///
     func advance() {
         currentToken = lexer.next()
     }
     
+    /// Accent a token a type ``type``.
+    ///
+    /// - Returns: A token if the token matches the expected type, ``nil`` if
+    ///     the token does not match the expected type.
+    ///
     func accept(_ type: TokenType) -> Token? {
         guard let token = currentToken else {
             return nil
@@ -70,13 +82,13 @@ class Parser {
 
     // ----------------------------------------------------------------
     
-    func `operator`(_ op: String) -> String? {
+    func `operator`(_ op: String) -> Token? {
         guard let token = currentToken else {
             return nil
         }
         if token.type == .operator && token.text == op {
             advance()
-            return token.text
+            return token
         }
         else {
             return nil
@@ -84,25 +96,21 @@ class Parser {
 
     }
     
-    func identifier() -> String? {
-        if let ident = accept(.identifier) {
-            return ident.text
+    func identifier() -> Token? {
+        if let token = accept(.identifier) {
+            return token
         }
         else {
             return nil
         }
     }
 
-    func number() -> Value? {
-        if let number = accept(.int) {
-            var sanitizedString = number.text
-            sanitizedString.removeAll { $0 == "_" }
-            return Value.int(Int(sanitizedString)!)
+    func number() -> ASTExpression? {
+        if let token = accept(.int) {
+            return .number(token)
         }
-        else if let number = accept(.float) {
-            var sanitizedString = number.text
-            sanitizedString.removeAll { $0 == "_" }
-            return Value.double(Double(sanitizedString)!)
+        else if let token = accept(.float) {
+            return .number(token)
         }
         else {
             return nil
@@ -111,13 +119,13 @@ class Parser {
     
     // variable_call -> IDENTIFIER ["(" ARGUMENTS ")"]
     
-    func variable_call() throws -> Expression? {
+    func variable_or_call() throws -> ASTExpression? {
         guard let ident = identifier() else {
             return nil
         }
-        
-        if accept(.leftParen) != nil {
-            var arguments: [Expression] = []
+        // FIXME: Preserve the paren tokens
+        if let leftParen = accept(.leftParen) {
+            var arguments: [ASTExpression] = []
             if accept(.rightParen) == nil {
                 repeat {
                     if let arg = try expression() {
@@ -136,29 +144,30 @@ class Parser {
         }
     }
     
-    // primary -> NUMBER | STRING | VARIABLE_CALL | "(" expression ")" ;
+    // primary -> NUMBER | STRING | VARIABLE_OR_CALL | "(" expression ")" ;
 
-    func primary() throws -> Expression? {
+    func primary() throws -> ASTExpression? {
         // TODO: true, false, nil
-        if let value = number() {
-            return .value(value)
+        if let node = number() {
+            return node
         }
-        else if let expr = try variable_call() {
-            return expr
+        else if let node = try variable_or_call() {
+            return node
         }
-        if accept(.leftParen) != nil {
-            let expr = try expression()
-            if accept(.rightParen) == nil {
-                throw ParserError.missingRightParenthesis
+        else if let lparen = accept(.leftParen) {
+            if let expr = try expression() {
+                guard let rparen = accept(.rightParen) else {
+                    throw ParserError.missingRightParenthesis
+                }
+                return .parenthesis(lparen, expr, rparen)
             }
-            return expr
         }
         return nil
     }
     
     // unary -> "-" unary | primary ;
     //
-    func unary() throws -> Expression? {
+    func unary() throws -> ASTExpression? {
         // TODO: Add '!'
         if let op = `operator`("-") {
             guard let right = try unary() else {
@@ -175,7 +184,7 @@ class Parser {
     // factor -> unary ( ( "/" | "*" ) unary )* ;
     //
 
-    func factor() throws -> Expression? {
+    func factor() throws -> ASTExpression? {
         guard var expr = try unary() else {
             return nil
         }
@@ -192,7 +201,7 @@ class Parser {
 
     // term -> factor ( ( "-" | "+" ) factor )* ;
     //
-    func term() throws -> Expression? {
+    func term() throws -> ASTExpression? {
         guard var expr = try factor() else {
             return nil
         }
@@ -207,20 +216,20 @@ class Parser {
         return expr
     }
     
-    func expression() throws -> Expression? {
+    func expression() throws -> ASTExpression? {
         return try term()
     }
     
     
     public func parse() throws -> Expression {
         guard let expr = try expression() else {
-            throw ParserError.emptyString
+            throw ParserError.expressionExpected
         }
         
         if currentToken?.type != .empty {
             throw ParserError.unexpectedToken
         }
-        return expr
+        return expr.toExpression()
     }
     
 }

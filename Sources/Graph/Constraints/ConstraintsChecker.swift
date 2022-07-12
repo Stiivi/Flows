@@ -28,6 +28,8 @@ public struct ConstraintViolation: CustomStringConvertible {
     }
 }
 
+/// An object that check constraints on a graph.
+///
 public class ConstraintChecker {
     // TODO: Dissolve this class back into Model?
     // TODO: This is a separate class to make thinking about the problem more explicit

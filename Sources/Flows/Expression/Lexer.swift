@@ -5,7 +5,7 @@
 //  Created by Stefan Urbanek on 30/06/2022.
 //
 
-enum TokenType: Equatable {
+public enum TokenType: Equatable {
     case empty
     case int
     case float
@@ -58,30 +58,30 @@ public struct TextLocation: CustomStringConvertible {
 /// information is preserved for potential programmatic source code editing
 /// while preserving the user formatting.
 ///
-struct Token {
+public struct Token {
     /// Type of the token as resolved by the lexer
-    let type: TokenType
+    public let type: TokenType
 
     /// Range of the token within the source string
-    let range: Range<String.Index>
+    public let range: Range<String.Index>
     
     // FIXME: Bind the token to the text.
     /// The token text.
-    let text: String
+    public let text: String
 
     /// Range of the trivia that precede the token.
-    let leadingTriviaRange: Range<String.Index>
-    let leadingTrivia: String
+    public let leadingTriviaRange: Range<String.Index>
+    public let leadingTrivia: String
     
     /// Range of the trivia that follow the token.
-    let trailingTriviaRange: Range<String.Index>
-    let trailingTrivia: String
+    public let trailingTriviaRange: Range<String.Index>
+    public let trailingTrivia: String
 
     /// Human-oriented location of the token within the source string.
-    let textLocation: TextLocation
+    public let textLocation: TextLocation
 
     
-    init(type: TokenType, source: String, range: Range<String.Index>,
+    public init(type: TokenType, source: String, range: Range<String.Index>,
          leadingTriviaRange: Range<String.Index>? = nil,
          trailingTriviaRange: Range<String.Index>? = nil,
          textLocation: TextLocation) {
@@ -103,10 +103,48 @@ struct Token {
     /// If ``fullText`` from all tokens is joined it must provide the original
     /// source string.
     ///
-    var fullText: String {
+    public var fullText: String {
         return leadingTrivia + text + trailingTrivia
     }
-    
+   
+    /// Return integer value of the token if the token represents an integer.
+    ///
+    /// The numeric string might contain optional digit separator underscore
+    /// `_`. For example: `'1_000'` for 1000 or `'1_00_00'` for 10000.
+    ///
+    /// - Returns: Integer value if the text is a valid number, otherwise ``nil``.
+    ///
+    func intValue() -> Int? {
+        guard self.type == .int else {
+            return nil
+        }
+        
+        var sanitizedString = text
+        sanitizedString.removeAll { $0 == "_" }
+        
+        return Int(sanitizedString)
+
+    }
+
+    /// Return double floating point value of the token if the token
+    /// represents a floating point number.
+    ///
+    /// The numberic string might contain optional digit separator underscore
+    /// `_`. For example: `'1_000.0'` for 1000 or `'1_00_00.1'` for 10000.1
+    ///
+    /// - Returns: Double value if the text is a valid number, otherwise ``nil``.
+    ///
+    func doubleValue() -> Double? {
+        guard self.type == .float else {
+            return nil
+        }
+        
+        var sanitizedString = text
+        sanitizedString.removeAll { $0 == "_" }
+        
+        return Double(sanitizedString)
+    }
+
 }
 
 
@@ -309,7 +347,12 @@ public class Lexer {
         }
     }
     
-    func next() -> Token {
+    /// Parse and return next token.
+    ///
+    /// Returns a token of type ``TokenType.empty`` when the end of the
+    /// string has been reached.
+    ///
+    public func next() -> Token {
         // Trivia:
         //
         // Inspiration from Swift: swift/include/swift/Syntax/Trivia.h.gyb
