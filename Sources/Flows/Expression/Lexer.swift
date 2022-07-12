@@ -1,11 +1,9 @@
 //
-//  File 2.swift
+//  Lexer.swift
 //  
 //
 //  Created by Stefan Urbanek on 30/06/2022.
 //
-
-import Foundation
 
 enum TokenType: Equatable {
     case empty
@@ -20,35 +18,109 @@ enum TokenType: Equatable {
 }
 
 
-/*
- 
- Token anatomy:
- 
- "    10"
- whitespace + "10"
- 
- startIndex -> endIndex
- text: textStartIndex -> textEndIndex
- fullText: paddedStartIndex -> paddedEndIndex
- 
- */
-
-struct Token {
-    let type: TokenType
-    let location: Lexer.Location
-    let startIndex: String.Index
-    let endIndex: String.Index
+/// Human-oriented location within a text.
+///
+/// `TextLocation` refers to a line number and a column within that line.
+///
+public struct TextLocation: CustomStringConvertible {
+    /// Line number in human representation, starting with 1.
+    var line: Int = 1
     
-    /// Flag whether the lexer has seen a whitespace before the token
-    let seenWhitespace: Bool
-    let text: String
+    /// Column number in human representation, starting with 1 for the
+    /// leftmost column.
+    var column: Int = 1
+
+    /// Advances the location by one character.
+    ///
+    /// - Parameters:
+    ///     - newLine: if `true` then we are advancing to the new line and
+    ///       resetting the column to 1.
+    ///
+    mutating func advance(_ character: Character) {
+        if character.isNewline {
+            column = 1
+            line += 1
+        }
+        else {
+            column += 1
+        }
+    }
+
+    public var description: String {
+        return "\(line):\(column)"
+    }
 }
 
-// TODO: Use drop(while:)
 
-class Lexer {
+/// Token represents a lexical unit of the source.
+///
+/// The token includes trivia - leading and trailing whitespace. This
+/// information is preserved for potential programmatic source code editing
+/// while preserving the user formatting.
+///
+struct Token {
+    /// Type of the token as resolved by the lexer
+    let type: TokenType
+
+    /// Range of the token within the source string
+    let range: Range<String.Index>
+    
+    // FIXME: Bind the token to the text.
+    /// The token text.
+    let text: String
+
+    /// Range of the trivia that precede the token.
+    let leadingTriviaRange: Range<String.Index>
+    let leadingTrivia: String
+    
+    /// Range of the trivia that follow the token.
+    let trailingTriviaRange: Range<String.Index>
+    let trailingTrivia: String
+
+    /// Human-oriented location of the token within the source string.
+    let textLocation: TextLocation
+
+    
+    init(type: TokenType, source: String, range: Range<String.Index>,
+         leadingTriviaRange: Range<String.Index>? = nil,
+         trailingTriviaRange: Range<String.Index>? = nil,
+         textLocation: TextLocation) {
+        // FIXME: Use Substrings
+        self.type = type
+        self.range = range
+        self.text = String(source[range])
+
+        self.leadingTriviaRange = leadingTriviaRange ?? (range.lowerBound..<range.lowerBound)
+        self.leadingTrivia = String(source[self.leadingTriviaRange])
+        self.trailingTriviaRange = trailingTriviaRange ?? (range.upperBound..<range.upperBound)
+        self.trailingTrivia = String(source[self.trailingTriviaRange])
+
+        self.textLocation = textLocation
+    }
+    
+    /// Full text of the token - including leading and trailing trivia.
+    ///
+    /// If ``fullText`` from all tokens is joined it must provide the original
+    /// source string.
+    ///
+    var fullText: String {
+        return leadingTrivia + text + trailingTrivia
+    }
+    
+}
+
+
+/// An object for lexical analysis of an arithmetic expression.
+///
+/// Lexer takes a string containing an arithmetic expression and returns a list
+/// of tokens.
+///
+/// - SeeAlso:
+///     - ``Token``
+///
+public class Lexer {
     /// String to be tokenised.
-    var string: String
+    var source: String
     
     /// Index of the current character
     var currentIndex: String.Index
@@ -57,55 +129,13 @@ class Lexer {
     var currentChar: Character?
     
     /// Human understandable location.
-    var location: Location
+    var location: TextLocation
     
-    /// Token start index
-    var startIndex: String.Index
-    /// Token end index
-    var endIndex: String.Index
-    
-    var text: Substring {
-        string[startIndex..<currentIndex]
-    }
-    
-    var seenWhitespace: Bool = false
-    
-    /// Location within a text.
-    public struct Location: CustomStringConvertible {
-        /// Line number in human representation, starting with 1.
-        var line: Int = 1
-        
-        /// Column number in human representation, starting with 1 for the
-        /// leftmost column.
-        var column: Int = 1
-
-        /// Advances the location by one character.
-        ///
-        /// - Parameters:
-        ///     - newLine: if `true` then we are advancing to the new line and
-        ///       resetting the column to 1.
-        ///
-        mutating func advance(_ character: Character) {
-            if character.isNewline {
-                column = 1
-                line += 1
-            }
-            else {
-                column += 1
-            }
-        }
-
-        public var description: String {
-            return "\(line):\(column)"
-        }
-    }
-    
-    
-    init(string: String) {
-        self.string = string
+    /// Creates a lexer that parses a source string ``string``.
+    ///
+    public init(string: String) {
+        self.source = string
         currentIndex = string.startIndex
-        startIndex = currentIndex
-        endIndex = currentIndex
         
         if string.startIndex < string.endIndex {
             currentChar = string[currentIndex]
@@ -114,13 +144,22 @@ class Lexer {
             currentChar = nil
         }
         
-        location = Location()
+        location = TextLocation()
     }
     
+    /// Flag indicating whether the lexer reached the end of the source string.
+    ///
     var atEnd: Bool {
-        return currentIndex == string.endIndex
+        return currentIndex == source.endIndex
     }
     
+    
+    // MARK: Acceptance and advancement
+    /// Advances the lexer by one character.
+    ///
+    /// This method is called when a character is accepted. It advances
+    /// the reading position of the source and updates the text location.
+    ///
     func advance() {
         guard !atEnd else {
             return
@@ -128,37 +167,34 @@ class Lexer {
         
         // Advance current index and current character
         //
-        currentIndex = string.index(after: currentIndex)
-
-        if currentIndex < string.endIndex {
-            currentChar = string[currentIndex]
+        currentIndex = source.index(after: currentIndex)
+        
+        if currentIndex < source.endIndex {
+            currentChar = source[currentIndex]
             location.advance(currentChar!)
         }
         else {
             currentChar = nil
         }
     }
-    
-    func makeToken(type: TokenType) -> Token {
-        return Token(type: type,
-                     location: location,
-                     startIndex: startIndex,
-                     endIndex: currentIndex,
-                     seenWhitespace: seenWhitespace,
-                     text: String(text))
-    }
-    
+
+    /// Accept a character at current position.
+    ///
+    /// - Precondition: The lexer must not be at the end.
+    ///
     func accept() {
         guard currentChar != nil else {
             fatalError("Accepting without current character")
         }
-        endIndex = currentIndex
         advance()
     }
     
+    /// Accept a concrete character. Returns ``true`` if the current character
+    /// is equal to the requested character.
+    ///
     @discardableResult
-    func accept(_ char: Character) -> Bool {
-        if currentChar == char {
+    func accept(_ character: Character) -> Bool {
+        if currentChar == character {
             accept()
             return true
         }
@@ -167,6 +203,9 @@ class Lexer {
         }
     }
     
+    /// Accept a character that matches given predicate. Returns ``true`` if
+    /// the predicate function returns ``true`` for the current character.
+    ///
     @discardableResult
     func accept(_ predicate: (Character) -> Bool) -> Bool {
         guard let char = currentChar else {
@@ -181,6 +220,10 @@ class Lexer {
         }
     }
     
+    // MARK: Tokens
+    
+    /// Accepts an integer or a floating point number.
+    ///
     func acceptNumber() -> TokenType? {
         var type: TokenType = .int
         
@@ -225,6 +268,11 @@ class Lexer {
         }
     }
     
+    /// Accepts an identifier.
+    ///
+    /// Identifier is a sequence of characters that start with a letter or an
+    /// underscore `_`.
+    ///
     func acceptIdentifier() -> TokenType? {
         guard accept(\.isLetter) || accept("_") else {
             return nil
@@ -262,27 +310,62 @@ class Lexer {
     }
     
     func next() -> Token {
-        // Skip whitespace
-        seenWhitespace = false
+        // Trivia:
+        //
+        // Inspiration from Swift: swift/include/swift/Syntax/Trivia.h.gyb
+        // At this moment there is no reason for parsing the trivia one way
+        // or the other.
+        //
+        // 1. A token owns all of its trailing trivia up to, but not including,
+        //    the next newline character.
+        //
+        // 2. Looking backward in the text, a token owns all of the leading trivia
+        //    up to and including the first contiguous sequence of newlines characters.
+
+        // Leading trivia
+        let leadingTriviaStartIndex = currentIndex
         while(accept(\.isWhitespace)) {
-            seenWhitespace = true
         }
+        let leadingTriviaRange = leadingTriviaStartIndex..<currentIndex
+        
+        // Token text start index
+        let startIndex = currentIndex
 
-        guard !atEnd else {
-            return makeToken(type: .empty)
+        if atEnd {
+            return Token(type: .empty,
+                         source: source,
+                         range: (startIndex..<currentIndex),
+                         leadingTriviaRange: leadingTriviaRange,
+                         textLocation: location)
         }
-
-        startIndex = currentIndex
-                
-        if let type = acceptNumber()
+        else if let type = acceptNumber()
                         ?? acceptIdentifier()
                         ?? acceptOperator()
                         ?? acceptPunctuation() {
-            return makeToken(type: type)
+
+            // Parse trailing trivia
+            //
+            let endIndex = currentIndex
+            let trailingTriviaStartIndex = currentIndex
+            while(!accept(\.isNewline) && accept(\.isWhitespace)) {
+            }
+            let trailingTriviaRange = trailingTriviaStartIndex..<currentIndex
+
+
+            return Token(type: type,
+                         source: source,
+                         range: (startIndex..<endIndex),
+                         leadingTriviaRange: leadingTriviaRange,
+                         trailingTriviaRange: trailingTriviaRange,
+                         textLocation: location)
         }
         else {
             accept()
-            return makeToken(type: .error(.unexpectedCharacter))
+            return Token(type: .error(.unexpectedCharacter),
+                         source: source,
+                         range: (startIndex..<currentIndex),
+                         leadingTriviaRange: leadingTriviaRange,
+                         textLocation: location)
         }
     }
 }
