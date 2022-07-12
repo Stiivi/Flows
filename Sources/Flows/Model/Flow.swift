@@ -5,7 +5,12 @@
 //  Created by Stefan Urbanek on 13/06/2022.
 //
 
-import Foundation
+/// Object representing a flow.
+///
+/// Flow is a node that can be connected to two stocks by a flow link. One stock
+/// is an inflow - stock from which the node drains, and another stock is an
+/// outflow - stock to which the node fills.
+///
 public class Flow: ExpressionNode {
     public init(name: String, expression: String) {
         super.init(name: name, expression: expression, labels: ["flow"])

@@ -10,6 +10,8 @@ import Foundation
 
 // Alias: Accumulator, level, state, container, reservoir, pool
 
+/// A node representing a stock – accumulator, container, reservoir, a pool.
+///
 public class Stock: ExpressionNode {
     public init(name: String, expression: String) {
         super.init(name: name, expression: expression)

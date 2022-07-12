@@ -1,5 +1,7 @@
 import Graph
 
+/// Abstract class that represents a node with an arithmetic expression.
+///
 public class ExpressionNode: Node {
     /// Name of the node
     public var name: String

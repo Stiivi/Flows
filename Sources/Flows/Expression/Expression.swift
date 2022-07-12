@@ -13,15 +13,22 @@ public protocol ExpressionConvertible {
 }
 
 
+/// Arithmetic expression.
+///
+/// Represents components of an arithmetic expression: values, variables,
+/// operators and functions.
+///
 public indirect enum Expression: Hashable {
     // Literals
     /// `NULL` literal
     case null
+
     /// Integer number literal
     case value(Value)
 
     /// Binary operator
     case binary(String, Expression, Expression)
+    
     /// Unary operator
     case unary(String, Expression)
 

@@ -5,8 +5,6 @@
 //  Created by Stefan Urbanek on 05/06/2022.
 //
 
-import Foundation
-
 
 /// Structure that represents a compiled expression node. The string expression
 /// is parsed and represented as an `Expression` structure.
@@ -27,6 +25,15 @@ public struct CompiledExpressionNode {
     }
 }
 
+/// Compiled version of the model for the simulator.
+///
+/// The simulator is using compiled model for performing the simulation. The
+/// original model might contain additional information that might need to be
+/// derived or it might not be valid. The original model serves modelling
+/// purposes.
+///
+/// Compiled model has graph validated, references resolved and nodes ordered.
+///
 public class CompiledModel {
     /// Topologically sorted nodes
     let sortedNodes: [CompiledExpressionNode]

@@ -9,6 +9,11 @@ import Foundation
 
 // Alias: auxiliary, expression, constant, variable, ...
 
+// TODO: Rename to Auxiliary
+// FIXME: Match label
+
+/// Auxiliary node that contains either a constant or a formula.
+///
 public class Transform: ExpressionNode {
     public init(name: String, expression: String) {
         super.init(name: name, expression: expression, labels: ["converter"])

@@ -7,27 +7,46 @@
 
 import Graph
 
+/// An error thrown by the compiler when there are issues with the model.
 public enum CompilerError: Error {
+    /// Issues with particular nodes
     case nodeIssues([ExpressionNodeIssue])
+    /// Issues with the model
     case modelIssues([ExpressionNodeIssue], [ConstraintViolation])
 }
 
-
+/// Detailed node error
+///
 public enum NodeError: Error, Equatable {
     /// Connected node is not used.
     case unusedInput(String)
+    /// Parameter used in the expression is unknown.
     case unknownParameter(String)
+    /// Error parsing the expression.
     case expressionError(ParserError)
 }
 
+/// A structure representing an issue with an expression node.
+///
 public struct ExpressionNodeIssue {
+    /// Node that has issues.
     let node: ExpressionNode
+    
+    /// Detailed information about the issue.
     let error: NodeError
 }
 
-/// Compiler for the model
+/// An object that compiles the model into a ``CompiledModel``.
+///
+/// The compiler makes sure that the model is valid, references
+/// are resolved. It resolves the order in which the nodes are
+/// to be evaluated.
 ///
 public class Compiler {
+    // NOTE: This class might have been a function, but I am keeping it here
+    //       because it helps me with thinking - concern separation.
+    //
+    /// Reference to the model to be compiled.
     let model: Model
     
     /// Creates a compiler that will compile within the context of the given
@@ -37,6 +56,19 @@ public class Compiler {
         self.model = model
     }
     
+    /// Compiles the model and returns the compiled version of the model.
+    ///
+    /// The compilation process is as follows:
+    ///
+    /// 1. Compile every expression node into a `CompiledExpressionNode`. See
+    ///    ``Compiler/compile(node:)``
+    /// 2. Check constraints using ``Compiler/checkConstraints()``
+    /// 3. Topologically sort the expression nodes.
+    ///
+    /// - Throws: A ``CompilerError`` when there are issues with the model.
+    /// - Returns: A ``CompiledModel`` that can be used directly by the
+    ///   simulator.
+    ///
     public func compile() throws -> CompiledModel {
         var nodeIssues: [ExpressionNodeIssue] = []
         var compiledNodes: [ExpressionNode:CompiledExpressionNode] = [:]
@@ -155,9 +187,9 @@ public class Compiler {
     ///   own, it is not guaranteed that the node is not violating other
     ///   graph-related constraints.
     ///
-    /// - Throws: `CompilerError` when the node has issues.
+    /// - Throws: ``CompilerError`` when the node has issues.
     ///
-    func compile(node: ExpressionNode) throws -> CompiledExpressionNode {
+    public func compile(node: ExpressionNode) throws -> CompiledExpressionNode {
         let parser = Parser(string: node.expressionString)
 
         let expression: Expression

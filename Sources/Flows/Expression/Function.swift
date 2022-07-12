@@ -7,11 +7,31 @@
 
 import Foundation
 
-public struct FunctionError {
+/// Error describing an issue with an argument passed to a function.
+///
+/// This structure is returned from validation of function arguments. See
+/// `FunctionProtocol.validate()` for more information.
+///
+public struct FunctionArgumentError {
+    // TODO: Use direct function reference instead of a name
+    
+    /// Name of the function
     public let function: String
+    
+    /// Detailed information about the error.
     public let message: String
+    
+    /// Index of the argument that is causing the error or nil if there is
+    /// an issue that can not be associated with a concrete argument.
     public let argument: Int?
     
+    /// Creates a new function argument error.
+    ///
+    /// - Parameters:
+    ///     - function: Name of a function that claims the validation error
+    ///     - message: detailed information about the error
+    ///     - argument: index of the argument that caused the error
+    ///
     public init(function: String, message: String, argument: Int?=nil) {
         self.function = function
         self.message = message
@@ -19,14 +39,17 @@ public struct FunctionError {
     }
 }
 
-
+/// Protocol describing a function.
+///
 public protocol FunctionProtocol {
+    /// Name of the function
     var name: String { get }
+    
     /// Validate arguments that are expected to be passed to the function.
     /// Returns a list of errors if there are issues with the arguments.
     /// The list is empty if there are no issues.
     ///
-    func validate(_ arguments: [Value]) -> [FunctionError]
+    func validate(_ arguments: [Value]) -> [FunctionArgumentError]
     
     /// Applies the function to the arguments and returns the result. This
     /// function is guaranteed not to fail.
@@ -36,14 +59,19 @@ public protocol FunctionProtocol {
     func apply(_ arguments: [Value]) -> Value
 }
 
-typealias FunctionImplementation = ([Value]) -> Value
+/// Type representing a concrete function that evaluates the arguments of
+/// `Value` type and returns a value.
+///
+public typealias FunctionImplementation = ([Value]) -> Value
 
-class NumericBinaryOperator: FunctionProtocol {
+/// An object that represents a binary operator - a function of two
+/// numeric arguments.
+///
+public class NumericBinaryOperator: FunctionProtocol {
+    public typealias Implementation = (Double, Double) -> Double
     
-    typealias Implementation = (Double, Double) -> Double
-    
-    let name: String
-    let implementation: Implementation
+    public let name: String
+    public let implementation: Implementation
     
     init(name: String, implementation: @escaping Implementation) {
         self.name = name
@@ -51,12 +79,12 @@ class NumericBinaryOperator: FunctionProtocol {
     }
     
     /// Returns a list of indices of arguments that have mismatched types
-    public func validate(_ arguments: [Value]) -> [FunctionError] {
-        var errors: [FunctionError] = []
+    public func validate(_ arguments: [Value]) -> [FunctionArgumentError] {
+        var errors: [FunctionArgumentError] = []
         
         if arguments.count != 2 {
             errors.append(
-                FunctionError(function: name,
+                FunctionArgumentError(function: name,
                               message: "Invalid number of arguments (\(arguments.count) for binary operator. Expected exactly 2.")
             )
         }
@@ -64,7 +92,7 @@ class NumericBinaryOperator: FunctionProtocol {
         for (i, arg) in arguments.enumerated() {
             if !arg.valueType.isNumeric {
                 errors.append(
-                    FunctionError(function: name,
+                    FunctionArgumentError(function: name,
                                   message: "Invalid argument type. Argument number \(i) is \(arg.valueType) expected is float or int")
                 )
             }
@@ -91,24 +119,27 @@ class NumericBinaryOperator: FunctionProtocol {
     }
 }
 
-class NumericUnaryOperator: FunctionProtocol {
-    typealias Implementation = (Double) -> Double
+/// An object that represents a unary operator - a function of one numeric
+/// argument.
+///
+public class NumericUnaryOperator: FunctionProtocol {
+    public typealias Implementation = (Double) -> Double
     
-    let name: String
-    let implementation: Implementation
+    public let name: String
+    public let implementation: Implementation
     
-    init(name: String, implementation: @escaping Implementation) {
+    public init(name: String, implementation: @escaping Implementation) {
         self.name = name
         self.implementation = implementation
     }
     
     /// Returns a list of indices of arguments that have mismatched types
-    func validate(_ arguments: [Value]) -> [FunctionError] {
-        var errors: [FunctionError] = []
+    public func validate(_ arguments: [Value]) -> [FunctionArgumentError] {
+        var errors: [FunctionArgumentError] = []
         
         if arguments.count != 1 {
             errors.append(
-                FunctionError(function: name,
+                FunctionArgumentError(function: name,
                               message: "Invalid number of arguments (\(arguments.count) for unary operator. Expected exactly 1.")
             )
         }
@@ -116,7 +147,7 @@ class NumericUnaryOperator: FunctionProtocol {
         
         if !arg.valueType.isNumeric {
             errors.append(
-                FunctionError(function: name,
+                FunctionArgumentError(function: name,
                               message: "Invalid argument type. Argument is \(arg.valueType) expected is float or int")
             )
         }
@@ -128,7 +159,7 @@ class NumericUnaryOperator: FunctionProtocol {
     ///
     /// - Precondition: Arguments must be float convertible.
     ///
-    func apply(_ arguments: [Value] ) -> Value {
+    public func apply(_ arguments: [Value] ) -> Value {
         guard arguments.count == 1 else {
             fatalError("Invalid number of arguments (\(arguments.count) to a binary operator.")
         }
@@ -141,14 +172,16 @@ class NumericUnaryOperator: FunctionProtocol {
     }
 }
 
-
+/// An object that represents a generic function of zero or multiple numeric
+/// arguments and returning a numeric value.
+///
 public class NumericFunction: FunctionProtocol {
     public typealias Implementation = ([Double]) -> Double
     
     public let name: String
-    let implementation: Implementation
-    let signature: [String]
-    let isVariadic: Bool
+    public let implementation: Implementation
+    public let signature: [String]
+    public let isVariadic: Bool
     
     public init(name: String, signature: [String]=[], isVariadic: Bool=false,
          implementation: @escaping Implementation) {
@@ -159,14 +192,14 @@ public class NumericFunction: FunctionProtocol {
     }
     
     /// Returns a list of indices of arguments that have mismatched types
-    public func validate(_ arguments: [Value]) -> [FunctionError] {
-        var errors: [FunctionError] = []
+    public func validate(_ arguments: [Value]) -> [FunctionArgumentError] {
+        var errors: [FunctionArgumentError] = []
         
         // FIXME: Use new flag "required" - whether at least one argument is required
         if isVariadic {
             if signature.count == 0 && arguments.count == 0 {
                 errors.append(
-                    FunctionError(function: name,
+                    FunctionArgumentError(function: name,
                                   message: "Variadic function expects at least one argument")
                 )
             }
@@ -174,7 +207,7 @@ public class NumericFunction: FunctionProtocol {
         else {
             if arguments.count != signature.count {
                 errors.append(
-                    FunctionError(function: name,
+                    FunctionArgumentError(function: name,
                                   message: "Expected \(signature.count) arguments, provided (\(arguments.count).")
                 )
             }
@@ -183,7 +216,7 @@ public class NumericFunction: FunctionProtocol {
         for (i, arg) in arguments.enumerated() {
             if !arg.valueType.isNumeric {
                 errors.append(
-                    FunctionError(function: name,
+                    FunctionArgumentError(function: name,
                                   message: "Invalid argument type. Argument number \(i) is \(arg.valueType) expected is float or int")
                 )
             }
@@ -205,45 +238,3 @@ public class NumericFunction: FunctionProtocol {
     }
 }
 
-// Mark: Builtins
-
-let builtinUnaryOperators = [
-    NumericUnaryOperator(name: "-") { -$0 }
-]
-
-let builtinBinaryOperators = [
-    NumericBinaryOperator(name: "+") { $0 + $1 },
-    NumericBinaryOperator(name: "-") { $0 - $1 },
-    NumericBinaryOperator(name: "*") { $0 * $1 },
-    NumericBinaryOperator(name: "/") { $0 / $1 },
-    NumericBinaryOperator(name: "%") { $0.truncatingRemainder(dividingBy: $1) },
-]
-
-let builtinFunctions: [NumericFunction] = [
-    NumericFunction(name: "abs", signature: ["value"]) { args
-        in args[0].magnitude
-    },
-    NumericFunction(name: "floor", signature: ["value"]) { args
-        in args[0].rounded(.down)
-    },
-    NumericFunction(name: "ceiling", signature: ["value"]) { args
-        in args[0].rounded(.up)
-    },
-    NumericFunction(name: "round", signature: ["value"]) { args
-        in args[0].rounded()
-    },
-
-    // Variadic
-    
-    NumericFunction(name: "sum", isVariadic: true) { args
-        in args.reduce(0, { x, y in x + y })
-    },
-    NumericFunction(name: "min", isVariadic: true) { args
-        in args.min()!
-    },
-    NumericFunction(name: "max", isVariadic: true) { args
-        in args.max()!
-    },
-]
-
-let allBuiltinFunctions: [FunctionProtocol] = builtinUnaryOperators + builtinBinaryOperators + builtinFunctions

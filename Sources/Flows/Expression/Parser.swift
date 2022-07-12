@@ -27,9 +27,6 @@ public enum ParserError: Error, Equatable, CustomStringConvertible {
     }
 }
 
-
-
-
 // https://craftinginterpreters.com/parsing-expressions.html
 // https://stackoverflow.com/questions/2245962/writing-a-parser-like-flex-bison-that-is-usable-on-8-bit-embedded-systems/2336769#2336769
 

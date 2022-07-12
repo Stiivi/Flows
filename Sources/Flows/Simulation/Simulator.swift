@@ -6,17 +6,32 @@
 //
 
 
-/// Simulation state
-
+/// An object that performs the simulation.
+///
+/// Simulator is an object that given a valid model performs an iterative
+/// simulation of the dynamical system described by the model.
+///
 public class Simulator {
+    /// Model to be simulated.
+    ///
     public let model: Model
+    
+    /// Compiled version of the model.
     public let compiledModel: CompiledModel
+    
+    /// History of captured values of the simulation.
     public var history: [SimulationState] = []
+    
+    /// Current step of the simulation.
     public var currentStep: Int = 0
     
+    /// Last state of the simulation.
     var last: SimulationState? { history.last }
     
+    /// Creates a new simulator with given model.
+    ///
     public init(model: Model) {
+        // FIXME: Do not compile here. Get directly a compiled model.
         self.model = model
         do {
             let compiler = Compiler(model: model)
@@ -26,7 +41,7 @@ public class Simulator {
             fatalError("Model compilation error: \(error)")
         }
     }
-    
+   
     /// Runs the simulation for given number of steps and return last state
     /// of the simulation.
     ///
@@ -63,8 +78,20 @@ public class Simulator {
         }
         history.removeAll()
         history.append(state)
+        currentStep = 0
     }
     
+    public func reset() {
+        // TODO: Unite with initialize()
+        // NOTE: This is here for now, because there are multiple pathways of resetting
+        //       the simulation. Semantically they are different, functionally
+        //       they are the same at this moment.
+        initialize()
+    }
+
+    
+    /// Evaluate the model based on the last state and returns a new state.
+    ///
     func evaluate() -> SimulationState {
         let state = SimulationState(step: currentStep)
         
@@ -80,11 +107,13 @@ public class Simulator {
         return state
     }
     
+    /// Evaluate a node within the context of a simulation state.
+    ///
     func evaluate(node: CompiledExpressionNode, state: SimulationState) throws -> Double {
         let evaluator = NumericExpressionEvaluator()
         var functions: [String:FunctionProtocol] = [:]
         
-        for function in allBuiltinFunctions {
+        for function in AllBuiltinFunctions {
             functions[function.name] = function
         }
         evaluator.functions = functions
@@ -97,6 +126,8 @@ public class Simulator {
         return value!.doubleValue()!
     }
     
+    /// Perform one step of the simulation.
+    /// 
     func step() -> SimulationState {
         currentStep += 1
         

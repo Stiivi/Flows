@@ -9,8 +9,6 @@
 
 import Foundation
 
-// TODO: Use ValueProtocol and then Something.asValue
-
 /// Protocol for objects that can be represented as ``Value``.
 ///
 public protocol ValueProtocol {
@@ -30,8 +28,6 @@ public enum ValueType: String, Equatable, Codable, CustomStringConvertible {
     case double
     /// String value type
     case string
-    // TODO: case date
-    // TODO: case double
     
     /// Returns `true` if the value of this type is convertible to
     /// another type using `xxxValue()` conversion.
@@ -104,6 +100,11 @@ public enum Value: Equatable, Hashable, Codable, ValueProtocol {
     
     /// A double precision floating point number value representation
     case double(Double)
+    
+    // TODO: case point2d(Double, Double)
+    // TODO: case point3d(Double, Double, Double)
+    // TODO: case date(Date)
+
     
     /// Initialise value from any object and match type according to the
     /// argument type. If no type can be matched, then returns nil.
