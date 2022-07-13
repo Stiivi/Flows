@@ -11,11 +11,12 @@ import XCTest
 
 final class LexerTests: XCTestCase {
     func testAcceptFunction() throws {
+        // TODO: This is a scanner test. (originally it was in the lexer)
         let lexer = Lexer(string: " ")
-        XCTAssertNotNil(lexer.currentChar)
-        XCTAssertTrue(lexer.accept(\.isWhitespace))
-        XCTAssertNil(lexer.currentChar)
-        XCTAssertTrue(lexer.atEnd)
+        XCTAssertNotNil(lexer.scanner.currentChar)
+        XCTAssertTrue(lexer.scanner.accept(\.isWhitespace))
+        XCTAssertNil(lexer.scanner.currentChar)
+        XCTAssertTrue(lexer.scanner.atEnd)
     }
     
     func testEmpty() throws {
@@ -43,6 +44,8 @@ final class LexerTests: XCTestCase {
         XCTAssertEqual(token.text, "$")
     }
 
+    // MARK: Numbers
+    
     func testInteger() throws {
         let lexer = Lexer(string: "1234")
         let token = lexer.next()
@@ -99,6 +102,31 @@ final class LexerTests: XCTestCase {
     }
 
 
+    func testIdentifier() throws {
+        let lexer = Lexer(string: "an_identifier_1")
+        let token = lexer.next()
+        XCTAssertEqual(token.type, TokenType.identifier)
+        XCTAssertEqual(token.text, "an_identifier_1")
+    }
+
+    // MARK: Punctuation and operators
+    
+    func testPunctuation() throws {
+        let lexer = Lexer(string: "( , )")
+
+        var token = lexer.next()
+        XCTAssertEqual(token.type, TokenType.leftParen)
+        XCTAssertEqual(token.text, "(")
+
+        token = lexer.next()
+        XCTAssertEqual(token.type, TokenType.comma)
+        XCTAssertEqual(token.text, ",")
+
+        token = lexer.next()
+        XCTAssertEqual(token.type, TokenType.rightParen)
+        XCTAssertEqual(token.text, ")")
+    }
+    
     func testOperator() throws {
         let lexer = Lexer(string: "+ - * / %")
 
@@ -123,29 +151,6 @@ final class LexerTests: XCTestCase {
         XCTAssertEqual(token.text, "%")
     }
 
-    func testIdentifier() throws {
-        let lexer = Lexer(string: "an_identifier_1")
-        let token = lexer.next()
-        XCTAssertEqual(token.type, TokenType.identifier)
-        XCTAssertEqual(token.text, "an_identifier_1")
-    }
-
-    func testPunctuation() throws {
-        let lexer = Lexer(string: "( , )")
-
-        var token = lexer.next()
-        XCTAssertEqual(token.type, TokenType.leftParen)
-        XCTAssertEqual(token.text, "(")
-
-        token = lexer.next()
-        XCTAssertEqual(token.type, TokenType.comma)
-        XCTAssertEqual(token.text, ",")
-
-        token = lexer.next()
-        XCTAssertEqual(token.type, TokenType.rightParen)
-        XCTAssertEqual(token.text, ")")
-    }
-
     func testMinusAsOperator() throws {
         let lexer = Lexer(string: "1-2")
         var token = lexer.next()
@@ -161,6 +166,8 @@ final class LexerTests: XCTestCase {
         XCTAssertEqual(token.text, "2")
     }
     
+    // MARK: Trivia
+    
     func testEmptyTrivia() throws {
         let lexer = Lexer(string: "   ")
         let token = lexer.next()
@@ -175,6 +182,68 @@ final class LexerTests: XCTestCase {
         XCTAssertEqual(token.type, TokenType.identifier)
         XCTAssertEqual(token.text, "thing")
         XCTAssertEqual(token.trailingTrivia, "   ")
+    }
+    
+    // MARK: Model tokens
+    
+    func testKeywords() throws {
+        let keywords = ["stock", "flow", "var", "output", "from", "to"]
+        
+        for keyword in keywords {
+            let lexer = Lexer(string: keyword, mode: .model)
+            let token = lexer.next()
+            XCTAssertEqual(token.type, TokenType.keyword)
+            XCTAssertEqual(token.text, keyword)
+        }
+
+        for keyword in keywords {
+            let lexer = Lexer(string: keyword, mode: .expression)
+            let token = lexer.next()
+            XCTAssertEqual(token.type, TokenType.identifier)
+            XCTAssertEqual(token.text, keyword)
+        }
+    }
+
+    func testNoAssignmentInExpression() throws {
+        let lexer = Lexer(string: "=", mode: .expression)
+        let token = lexer.next()
+        XCTAssertEqual(token.type, TokenType.error(.unexpectedCharacter))
+        XCTAssertEqual(token.text, "=")
+    }
+
+    func testAssignment() throws {
+        let lexer = Lexer(string: "=", mode: .model)
+        let token = lexer.next()
+        XCTAssertEqual(token.type, TokenType.assignment)
+        XCTAssertEqual(token.text, "=")
+
+    }
+
+    // MARK: Comments
+    func testLeadingComments() throws {
+        let source = """
+                     # Comment
+                     stock
+                     """
+        let lexer = Lexer(string: source, mode: .model)
+        let token = lexer.next()
+        XCTAssertEqual(token.type, TokenType.keyword)
+        XCTAssertEqual(token.text, "stock")
+        XCTAssertEqual(token.leadingTrivia, "# Comment\n")
+
+    }
+
+    func testTrailingComments() throws {
+        let source = """
+                     stock  # Comment
+                     thing
+                     """
+        let lexer = Lexer(string: source, mode: .model)
+        let token = lexer.next()
+        XCTAssertEqual(token.type, TokenType.keyword)
+        XCTAssertEqual(token.text, "stock")
+        XCTAssertEqual(token.trailingTrivia, "  # Comment\n")
+
     }
 
 }

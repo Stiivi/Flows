@@ -190,7 +190,7 @@ public class Compiler {
     /// - Throws: ``CompilerError`` when the node has issues.
     ///
     public func compile(node: ExpressionNode) throws -> CompiledExpressionNode {
-        let parser = Parser(string: node.expressionString)
+        let parser = ExpressionParser(string: node.expressionString)
 
         let expression: Expression
         

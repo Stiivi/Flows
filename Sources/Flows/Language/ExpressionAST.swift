@@ -7,14 +7,14 @@
 
 /// Abstract syntax tree of an arithmetic expression.
 ///
-indirect enum ASTExpression {
+indirect enum ExpressionAST {
     case number(Token)
     case variable(Token)
-    case parenthesis(Token, ASTExpression, Token)
-    case unary(Token, ASTExpression)
-    case binary(Token, ASTExpression, ASTExpression)
+    case parenthesis(Token, ExpressionAST, Token)
+    case unary(Token, ExpressionAST)
+    case binary(Token, ExpressionAST, ExpressionAST)
     // FIXME: We are losing tokens here!
-    case function(Token, [ASTExpression])
+    case function(Token, [ExpressionAST])
 
     /// Converts the AST to an actual expression object.
     func toExpression() -> Expression {

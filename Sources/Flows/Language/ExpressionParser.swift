@@ -5,29 +5,11 @@
 //  Created by Stefan Urbanek on 27/05/2022.
 //
 
-public enum ParserError: Error, Equatable, CustomStringConvertible {
-    case invalidCharacterInNumber
-    case unexpectedCharacter
-    case missingRightParenthesis
-    case expressionExpected
-    case unexpectedToken
-    
-    public var description: String {
-        switch self {
-        case .invalidCharacterInNumber: return "Invalid character in a number"
-        case .unexpectedCharacter: return "Unexpected character"
-        case .missingRightParenthesis: return "Right parenthesis ')' expected"
-        case .expressionExpected: return "Expected expression"
-        case .unexpectedToken: return "Unexpected token"
-        }
-    }
-}
-
 // https://craftinginterpreters.com/parsing-expressions.html
 // https://stackoverflow.com/questions/2245962/writing-a-parser-like-flex-bison-that-is-usable-on-8-bit-embedded-systems/2336769#2336769
 
 
-public class Parser {
+public class ExpressionParser {
     let lexer: Lexer
     var currentToken: Token?
     
@@ -41,7 +23,7 @@ public class Parser {
     /// Creates a new parser for an expression source string.
     ///
     public convenience init(string: String) {
-        self.init(lexer: Lexer(string: string))
+        self.init(lexer: Lexer(string: string, mode: .expression))
     }
     
     /// True if the parser is at the end of the source.
@@ -103,7 +85,7 @@ public class Parser {
         }
     }
 
-    func number() -> ASTExpression? {
+    func number() -> ExpressionAST? {
         if let token = accept(.int) {
             return .number(token)
         }
@@ -117,13 +99,13 @@ public class Parser {
     
     // variable_call -> IDENTIFIER ["(" ARGUMENTS ")"]
     
-    func variable_or_call() throws -> ASTExpression? {
+    func variable_or_call() throws -> ExpressionAST? {
         guard let ident = identifier() else {
             return nil
         }
         // FIXME: Preserve the paren tokens
         if let leftParen = accept(.leftParen) {
-            var arguments: [ASTExpression] = []
+            var arguments: [ExpressionAST] = []
             if accept(.rightParen) == nil {
                 repeat {
                     if let arg = try expression() {
@@ -144,7 +126,7 @@ public class Parser {
     
     // primary -> NUMBER | STRING | VARIABLE_OR_CALL | "(" expression ")" ;
 
-    func primary() throws -> ASTExpression? {
+    func primary() throws -> ExpressionAST? {
         // TODO: true, false, nil
         if let node = number() {
             return node
@@ -165,7 +147,7 @@ public class Parser {
     
     // unary -> "-" unary | primary ;
     //
-    func unary() throws -> ASTExpression? {
+    func unary() throws -> ExpressionAST? {
         // TODO: Add '!'
         if let op = `operator`("-") {
             guard let right = try unary() else {
@@ -182,7 +164,7 @@ public class Parser {
     // factor -> unary ( ( "/" | "*" ) unary )* ;
     //
 
-    func factor() throws -> ASTExpression? {
+    func factor() throws -> ExpressionAST? {
         guard var expr = try unary() else {
             return nil
         }
@@ -199,7 +181,7 @@ public class Parser {
 
     // term -> factor ( ( "-" | "+" ) factor )* ;
     //
-    func term() throws -> ASTExpression? {
+    func term() throws -> ExpressionAST? {
         guard var expr = try factor() else {
             return nil
         }
@@ -214,7 +196,7 @@ public class Parser {
         return expr
     }
     
-    func expression() throws -> ASTExpression? {
+    func expression() throws -> ExpressionAST? {
         return try term()
     }
     
