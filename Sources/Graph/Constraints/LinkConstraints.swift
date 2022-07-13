@@ -11,11 +11,13 @@
 ///
 public class LinkConstraint: Constraint {
     public let name: String
+    public let description: String?
     public let match: LinkPredicate
     public let requirement: LinkConstraintRequirement
     
-    public init(name: String, match: LinkPredicate, requirement: LinkConstraintRequirement) {
+    public init(name: String, description: String? = nil, match: LinkPredicate, requirement: LinkConstraintRequirement) {
         self.name = name
+        self.description = description
         self.match = match
         self.requirement = requirement
     }

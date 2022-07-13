@@ -7,8 +7,6 @@
 
 // Note: This is from project Tarot. Still evolving. Keep concepts in sync if possible.
 
-import Foundation
-
 /// Protocol for objects that can be represented as ``Value``.
 ///
 public protocol ValueProtocol {

@@ -5,8 +5,6 @@
 //  Created by Stefan Urbanek on 04/06/2022.
 //
 
-import Foundation
-
 /// Error describing an issue with an argument passed to a function.
 ///
 /// This structure is returned from validation of function arguments. See

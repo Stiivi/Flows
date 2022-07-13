@@ -218,8 +218,7 @@ public class Compiler {
         var errors: [NodeError] = []
 
         let vars = Set(expression.referencedVariables)
-        let incoming = node.incoming.filter { $0.contains(label: "parameter") }
-        let incomingNames = Set(incoming.map { ($0.origin as! ExpressionNode).name })
+        let incomingNames = Set(node.incomingParameterNodes.map {$0.name} )
         
         let notConnected = vars.subtracting(incomingNames)
         let unused = incomingNames.subtracting(vars)

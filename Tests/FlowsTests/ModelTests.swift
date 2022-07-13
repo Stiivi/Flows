@@ -6,7 +6,9 @@
 //
 
 import XCTest
+
 @testable import Flows
+@testable import Graph
 
 final class ModelTests: XCTestCase {
 
@@ -16,7 +18,7 @@ final class ModelTests: XCTestCase {
         model.add(node)
         
         XCTAssertIdentical(model.stocks.first, node)
-        XCTAssertTrue(node.contains(label: "stock"))
+        XCTAssertTrue(node.contains(label: Model.StockNodeLabel))
     }
 
     func testAddFormula() throws {
@@ -24,8 +26,8 @@ final class ModelTests: XCTestCase {
         let node = Transform(name: "f", expression: "0")
         model.add(node)
         
-        XCTAssertIdentical(model.formulas.first, node)
-        XCTAssertTrue(node.contains(label: "converter"))
+        XCTAssertIdentical(model.transformations.first, node)
+        XCTAssertTrue(node.contains(label: Model.TransformNodeLabel))
     }
 
     func testAddFlow() throws {
@@ -36,7 +38,7 @@ final class ModelTests: XCTestCase {
         XCTAssertIdentical(model.flows.first, flow)
         XCTAssertNil(flow.drains)
         XCTAssertNil(flow.fills)
-        XCTAssertTrue(flow.contains(label: "flow"))
+        XCTAssertTrue(flow.contains(label: Model.FlowNodeLabel))
     }
 
     func testConnectFlow() throws {
@@ -49,16 +51,48 @@ final class ModelTests: XCTestCase {
         model.add(output)
         model.add(flow)
 
-        model.connect(from: input, to: flow, as: .flow)
+        let link = model.connect(from: input, to: flow, as: .flow)
+        XCTAssertTrue(link.contains(label:Model.FlowLinkLabel))
+
         model.connect(from: flow, to: output, as: .flow)
         
-        XCTAssertEqual(model.inflows(input), [])
-        XCTAssertEqual(model.outflows(input), [flow])
-        XCTAssertEqual(model.inflows(output), [flow])
-        XCTAssertEqual(model.outflows(output), [])
+        XCTAssertEqual(input.inflows, [])
+        XCTAssertEqual(input.outflows, [flow])
+        XCTAssertEqual(output.inflows, [flow])
+        XCTAssertEqual(output.outflows, [])
         
         XCTAssertIdentical(flow.drains, input)
         XCTAssertIdentical(flow.fills, output)
+    }
+
+    func testLinkParameter() throws {
+        let model = Model()
+        let stock = Stock(name: "stock", expression: "0")
+        let param = Transform(name: "param", float: 1)
+
+        model.add(stock)
+        model.add(param)
+
+        let link: Link = model.connect(from: param, to: stock)
+        XCTAssertTrue(link.contains(label:Model.ParameterLinkLabel))
+    }
+    
+    func testIncomingNames() throws {
+        let model = Model()
+        let stock = Stock(name: "stock", expression: "0")
+        let first = Transform(name: "first", float: 1)
+        let second = Transform(name: "second", float: 2)
+        let third = Transform(name: "third", float: 2)
+
+        model.add(stock)
+        model.add(first)
+        model.add(second)
+        model.add(third)
+
+        model.connect(from: first, to: stock)
+        model.connect(from: second, to: stock)
+
+        XCTAssertEqual(stock.incomingParameterNodes, [first, second])
     }
     
     func testSingleInflow() {
@@ -87,7 +121,7 @@ final class ModelTests: XCTestCase {
         model.connectFlow(from: stock2, to: flow)
         let violations4 = model.constraintChecker.check(graph: model.graph)
         XCTAssertFalse(violations4.isEmpty)
-        XCTAssertEqual(violations4.first!.name, "single_inflow_origin")
+        XCTAssertEqual(violations4.first?.name, "single_inflow_origin")
     }
 
     func testSingleOutflow() {
@@ -114,7 +148,7 @@ final class ModelTests: XCTestCase {
         model.connectFlow(from: flow, to: stock2)
         let violations4 = model.constraintChecker.check(graph: model.graph)
         XCTAssertFalse(violations4.isEmpty)
-        XCTAssertEqual(violations4.first!.name, "single_outflow_target")
+        XCTAssertEqual(violations4.first?.name, "single_outflow_target")
     }
 
     
@@ -131,9 +165,13 @@ final class ModelTests: XCTestCase {
 
         XCTAssertEqual(violations.count, 1)
             
-        let violation = violations.first!
+        if let violation = violations.first {
+            XCTAssertEqual(violation.name, "forbidden_flow_to_flow")
+        }
+        else {
+            XCTFail()
+        }
         
-        XCTAssertEqual(violation.name, "forbidden_flow_to_flow")
     }
     
     
@@ -152,9 +190,12 @@ final class ModelTests: XCTestCase {
 
         XCTAssertEqual(violations.count, 1)
             
-        let violation = violations.first!
-        
-        XCTAssertEqual(violation.name, "drain_and_fill_is_different")
+        if let violation = violations.first {
+            XCTAssertEqual(violation.name, "drain_and_fill_is_different")
+        }
+        else {
+            XCTFail()
+        }
     }
 
     func testConnectFlowSameStockTrue() throws {

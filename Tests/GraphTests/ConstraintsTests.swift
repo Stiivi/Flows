@@ -20,13 +20,13 @@ final class ConstraintsTests: XCTestCase {
         let constraint: NodeConstraint = NodeConstraint(
             name: "single_outflow",
             match: LabelPredicate(all: "source"),
-            requirement: UniqueNeighbourRequirement(links: LinkSelector("flow", direction: .outgoing), required: false)
+            requirement: UniqueNeighbourRequirement(LinkSelector("flow", direction: .outgoing), required: false)
         )
 
         let constraintRequired: NodeConstraint = NodeConstraint(
             name: "single_outflow",
             match: LabelPredicate(all: "source"),
-            requirement: UniqueNeighbourRequirement(links: LinkSelector("flow", direction: .outgoing), required: true)
+            requirement: UniqueNeighbourRequirement(LinkSelector("flow", direction: .outgoing), required: true)
         )
 
         graph.add(source)

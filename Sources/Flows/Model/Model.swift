@@ -8,7 +8,6 @@
 import Graph
 
 
-
 public enum __ModelError {
     case expressionError // Add expression compilation details
     case unusedInput(String)
@@ -40,37 +39,85 @@ public enum ModelError: Error, Equatable {
 public enum LinkType: String {
     case flow
     case parameter
+    
+    public var rawValue: String {
+        switch self {
+        case .flow: return Model.FlowLinkLabel
+        case .parameter: return Model.ParameterLinkLabel
+        }
+    }
 }
 
+/// Model of a dynamical system.
+///
+/// This is one of the core classes, it represents a model of a system that is
+/// to be simulated.
+///
+/// The model is a graph of nodes.
+///
 public class Model {
     // TODO: Split into Model (storage) and ModelManager (editing)
     
-    static let FlowLabel = "flow"
-    static let ParameterLabel = "parameter"
-    static let ExpressionLabel = "expression"
+    /// Label used for links that connect flows with stocks
+    static let FlowLinkLabel = "flow"
+
+    /// Selector for links from flows that are directed towards a node,
+    /// typically a stock.
+    static let InflowSelector = LinkSelector(Model.FlowLinkLabel, direction: .incoming)
+
+    /// Selector for links from nodes, typically a stock, that are directed to
+    /// a flow.
+    static let OutflowSelector = LinkSelector(Model.FlowLinkLabel, direction: .outgoing)
+
+    /// Label used for links that connect auxiliary nodes with other nodes
+    static let ParameterLinkLabel = "parameter"
+
+    // TODO: Move the following to respective classes
+    /// Label of a node representing a stock.
+    static let StockNodeLabel = "Stock"
+    /// Label of a node representing an auxiliary node.
+    static let TransformNodeLabel = "Transform"
+    /// Label of a node representing a flow node.
+    static let FlowNodeLabel = "Flow"
 
     /// Structure that holds all model objects – nodes and links.
     ///
     let graph: Graph
-//    let intent: Graph
     
     /// Sequence of IDs that are assigned to the model objects for user-facing
     /// identification.
     ///
     let idSequence: SequentialIDGenerator = SequentialIDGenerator()
     
+    /// List of all nodes that represent an expression, that is: stocks, flows
+    /// and transformation.
+    ///
     var expressionNodes: [ExpressionNode] { graph.nodes.compactMap { $0 as? ExpressionNode } }
     
+    /// List of all stock nodes.
+    ///
     public var stocks: [Stock] { graph.nodes.compactMap { $0 as? Stock } }
-    public var flows: [Flow] { graph.nodes.compactMap { $0 as? Flow } }
-    public var formulas: [Transform] { graph.nodes.compactMap { $0 as? Transform } }
 
+    /// List of all flow nodes.
+    ///
+    public var flows: [Flow] { graph.nodes.compactMap { $0 as? Flow } }
+
+    /// List of all transformation nodes.
+    ///
+    public var transformations: [Transform] { graph.nodes.compactMap { $0 as? Transform } }
+
+    /// List of links that connect flows with other nodes.
+    ///
     var flowLinks: [Link] {
-        graph.links.filter { $0.contains(label: Model.FlowLabel) }
+        graph.links.filter { $0.contains(label: Model.FlowLinkLabel) }
     }
+
+    /// List of links that connect parameters with other nodes.
+    ///
     var parameterLinks: [Link] {
-        graph.links.filter { $0.contains(label: Model.ParameterLabel) }
+        graph.links.filter { $0.contains(label: Model.ParameterLinkLabel) }
     }
+    
     
     // MARK: - Initialisation
    
@@ -86,42 +133,9 @@ public class Model {
        
     // MARK: - Query
 
-    /// Return all outgoing links from a node
-    public func outgoing(_ node: Node) -> [Link] {
-        return graph.outgoing(node)
-    }
-
-    /// Return all incoming links to a node
-    public func incoming(_ node: Node) -> [Link] {
-        return graph.incoming(node)
-    }
-
-    /// List of flows flowing into a stock.
-    ///
-    func inflows(_ stock: Stock) -> [Flow] {
-        let flowLinks = flowLinks.filter {
-            ($0.origin as? Flow != nil) && $0.target === stock
-        }
-        return flowLinks.compactMap { $0.origin as? Flow }
-    }
-    
-    /// List of flows flowing out from a stock.
-    ///
-    func outflows(_ stock: Stock) -> [Flow] {
-        let flowLinks = flowLinks.filter {
-            ($0.target as? Flow != nil) && $0.origin === stock
-        }
-        return flowLinks.compactMap { $0.target as? Flow }
-    }
-
-    func parameters(for node: Node) -> [Transform] {
-        let params = parameterLinks.filter {
-            $0.target === node
-        }.compactMap { $0.target as? Transform }
-        return params
-    }
-    /// Return a node with given name. If no such node exists, then returns
-    /// `nil`.
+    /// Return a first node with given name. If no such node exists, then returns
+    /// `nil`. If there are multiple nodes with the same name, then one is
+    /// returned arbitrarily.
     ///
     /// - Note: Only expression nodes can have a name.
     ///
@@ -148,6 +162,20 @@ public class Model {
         graph.add(node)
     }
     
+    /// Adds a list of nodes to the model.
+    ///
+    /// The model will become the owner of the nodes and will assign them an ID.
+    /// Nodes must not be part of another model.
+    ///
+    /// - Note: This is a convenience method for code readability purposes when
+    ///         creating models programatically.
+    ///
+    public func add(_ nodes: [Node]) {
+        for node in nodes {
+            self.add(node)
+        }
+    }
+    
     /// Remove node and all connections from/to the node from the model.
     ///
     /// The node is no longer owned by the model.
@@ -162,28 +190,6 @@ public class Model {
         graph.disconnect(link: link)
     }
     
-    // TODO: Fix the node names
-    /// Validates potential connection originating in node `origin` and ending in node
-    /// `target`.
-    ///
-    /// Valid connections:
-    ///
-    /// - From transform to any
-    /// - From stock to flow or transform
-    /// - From flow to stock or transform
-    ///
-    /// Invalid:
-    ///
-    /// - From flow to flow
-    /// - From flow to multiple stocks
-    /// - From multiple stocks to flow
-    ///
-    /// - Returns: `true` if nodes can be connected, `false` if the connection is
-    /// invalid.
-    ///
-    public func canConnect(from origin: Node, to target: Node, as type: LinkType = .parameter) -> Bool {
-        fatalError("Not implemented: \(#function)")
-    }
     
     /// Connects two nodes.
     ///

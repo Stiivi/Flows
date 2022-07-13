@@ -53,7 +53,11 @@ final class CompilerTests: XCTestCase {
 
         let violations = model.constraintChecker.check(graph: model.graph)
         XCTAssertEqual(violations.count, 1)
-        let violation = violations.first!
+
+        guard let violation = violations.first else {
+            XCTFail()
+            return
+        }
         
         XCTAssertEqual(violation.name, "unique_node_name")
         XCTAssertTrue(violation.objects.contains(c1))

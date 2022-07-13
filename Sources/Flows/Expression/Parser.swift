@@ -5,8 +5,6 @@
 //  Created by Stefan Urbanek on 27/05/2022.
 //
 
-import Foundation
-
 public enum ParserError: Error, Equatable, CustomStringConvertible {
     case invalidCharacterInNumber
     case unexpectedCharacter

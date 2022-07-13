@@ -5,8 +5,6 @@
 //  Created by Stefan Urbanek on 26/05/2022.
 //
 
-import Foundation
-
 
 public protocol ExpressionConvertible {
     var toExpression: Expression { get }

@@ -12,10 +12,6 @@
 /// outflow - stock to which the node fills.
 ///
 public class Flow: ExpressionNode {
-    public init(name: String, expression: String) {
-        super.init(name: name, expression: expression, labels: ["flow"])
-    }
-    
     /// Stock that the flow drains, if the flow input is connected.
     ///
     /// - Note: If there are multiple stocks connected, the model has no
@@ -23,7 +19,7 @@ public class Flow: ExpressionNode {
     ///
     public var drains: Stock? {
         let links = incoming.filter {
-            $0.contains(label:"flow") && $0.origin as? Stock != nil
+            $0.contains(label:Model.FlowLinkLabel) && $0.origin as? Stock != nil
         }
         
         // If we get multiple results then we pick arbitrarily "first". The model
@@ -45,7 +41,7 @@ public class Flow: ExpressionNode {
     ///
     public var fills: Stock? {
         let links = outgoing.filter {
-            $0.contains(label:"flow") && $0.target as? Stock != nil
+            $0.contains(label:Model.FlowLinkLabel) && $0.target as? Stock != nil
         }
         
         if let link = links.first {

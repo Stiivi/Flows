@@ -5,8 +5,6 @@
 //  Created by Stefan Urbanek on 28/05/2022.
 //
 
-import Foundation
-
 enum SimpleExpressionError: Error {
     case unknownVariable(String)
     case unknownFunction(String)

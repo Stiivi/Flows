@@ -9,11 +9,13 @@
 
 public class NodeConstraint: Constraint {
     public let name: String
+    public let description: String?
     public let match: NodePredicate
     public let requirement: NodeConstraintRequirement
     
-    public init(name: String, match: NodePredicate, requirement: NodeConstraintRequirement) {
+    public init(name: String, description: String? = nil, match: NodePredicate, requirement: NodeConstraintRequirement) {
         self.name = name
+        self.description = description
         self.match = match
         self.requirement = requirement
     }
@@ -56,13 +58,13 @@ public class UniqueNeighbourRequirement: NodeConstraintRequirement {
     ///     - linkSelector: link selector that has to be unique for the matching node
     ///     - required: Wether the unique neighbour is required.
     ///
-    public init(links linkSelector: LinkSelector, required: Bool=false) {
+    public init(_ linkSelector: LinkSelector, required: Bool=false) {
         self.linkSelector = linkSelector
         self.isRequired = required
     }
 
     public convenience init(_ label: String, direction: LinkDirection = .outgoing, required: Bool=false) {
-        self.init(links: LinkSelector(label, direction: direction), required: required)
+        self.init(LinkSelector(label, direction: direction), required: required)
     }
     
     public func check(_ node: Node) -> Bool {

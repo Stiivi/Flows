@@ -5,8 +5,6 @@
 //  Created by Stefan Urbanek on 06/06/2022.
 //
 
-import Foundation
-
 /// Captured state of the simulation.
 ///
 /// The structure contains collection of values of the nodes at a particular

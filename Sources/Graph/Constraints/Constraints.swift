@@ -60,7 +60,7 @@ public class AcceptAll: ObjectConstraintRequirement {
     }
    
     public func check(objects: [GraphObject]) -> [GraphObject] {
-        // We reject whatever comes in
+        // We accept everything, therefore we do not return any violations.
         return []
     }
 }

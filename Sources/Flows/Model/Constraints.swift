@@ -45,28 +45,43 @@ public class SameDrainFill: NodePredicate {
 
 let ModelConstraints: [Constraint] = [
     NodeConstraint(
-        // All flows must have only one outgoing "flow" link to a stock.
-        // This is a model integrity constraint.
         name: "single_outflow_target",
-        match: LabelPredicate(all: "flow"),
-        requirement: UniqueNeighbourRequirement("flow", direction: .outgoing)
+        description: """
+                     All flows must have only one outgoing 'flow' link to a \
+                     stock. This is a model integrity constraint.
+                     """,
+        match: LabelPredicate(all: Model.FlowNodeLabel),
+        requirement: UniqueNeighbourRequirement(Model.OutflowSelector)
     ),
+
     NodeConstraint(
-        // All flows must have only one incoming "flow" link from a stock.
         name: "single_inflow_origin",
-        match: LabelPredicate(all: "flow"),
-        requirement: UniqueNeighbourRequirement("flow", direction: .incoming)
+        description: """
+                     All flows must have only one incoming "flow" link
+                     from a stock. This is a model integrity constraint.
+                     """,
+        match: LabelPredicate(all: Model.FlowNodeLabel),
+        requirement: UniqueNeighbourRequirement(Model.InflowSelector)
     ),
+
     NodeConstraint(
-        // Inflow of a stock node must be different from the outflow
         name: "drain_and_fill_is_different",
+        description: """
+                     Inflow of a stock node must be different from the outflow.
+                     """,
         match: SameDrainFill(),
         requirement: RejectAll()
     ),
+
     NodeConstraint(
         // Name
         name: "unique_node_name",
-        match: LabelPredicate(any: "flow", "node", "stock"),
+        description: """
+                     Expression nodes (flows, stocks and transformations) \
+                     should have a unique name.
+                     """,
+
+        match: LabelPredicate(any: Model.FlowLinkLabel, Model.StockNodeLabel, Model.TransformNodeLabel),
         requirement: UniqueProperty<String> {
             if let node = $0 as? ExpressionNode {
                 return node.name
@@ -76,12 +91,17 @@ let ModelConstraints: [Constraint] = [
             }
         }
     ),
+    
     LinkConstraint(
         name: "forbidden_flow_to_flow",
+        description: """
+                     There must be no link of type "flow" from a flow to \
+                     another flow.
+                     """,
         match: LinkObjectPredicate(
-            origin: LabelPredicate(all: "flow"),
-            target: LabelPredicate(all: "flow"),
-            link: LabelPredicate(all: "flow")
+            origin: LabelPredicate(all: Model.FlowNodeLabel),
+            target: LabelPredicate(all: Model.FlowNodeLabel),
+            link: LabelPredicate(all: Model.FlowLinkLabel)
         ),
         requirement: RejectAll()
     )

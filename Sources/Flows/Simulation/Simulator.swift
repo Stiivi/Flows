@@ -5,7 +5,6 @@
 //  Created by Stefan Urbanek on 26/05/2022.
 //
 
-
 /// An object that performs the simulation.
 ///
 /// Simulator is an object that given a valid model performs an iterative
@@ -127,7 +126,7 @@ public class Simulator {
     }
     
     /// Perform one step of the simulation.
-    /// 
+    ///
     func step() -> SimulationState {
         currentStep += 1
         
@@ -136,11 +135,11 @@ public class Simulator {
         for stock in model.stocks {
             var delta: Double = 0
             
-            for inflow in model.inflows(stock) {
+            for inflow in stock.inflows {
                 delta += last![inflow.name]!
             }
             
-            for outflow in model.outflows(stock) {
+            for outflow in stock.outflows {
                 delta -= last![outflow.name]!
             }
             
