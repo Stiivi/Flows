@@ -21,4 +21,3 @@ indirect enum ModelAST {
         }
     }
 }
-

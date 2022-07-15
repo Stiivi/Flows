@@ -227,5 +227,17 @@ public class Model {
     // Remove formula
     // Connect node
     // Set node name
+    
+    /// Print the model
+    public func debugPrint() {
+        print("# NODES\n")
+        for node in graph.nodes {
+            print(node)
+        }
+        print("# LINKS\n")
+        for link in graph.links {
+            print(link)
+        }
+    }
 }
 

@@ -8,6 +8,7 @@
 /// Abstract syntax tree of an arithmetic expression.
 ///
 indirect enum ExpressionAST {
+    
     case number(Token)
     case variable(Token)
     case parenthesis(Token, ExpressionAST, Token)
@@ -16,6 +17,43 @@ indirect enum ExpressionAST {
     // FIXME: We are losing tokens here!
     case function(Token, [ExpressionAST])
 
+    var text: String {
+        switch self {
+        case let .number(token):
+            return token.text
+        case let .function(token, args):
+            let argsText = args.map { $0.text }.joined(separator: ", ")
+            return "\(token.text)(\(argsText))"
+        case let .variable(token):
+            return token.text
+        case let .parenthesis(_, node, _):
+            return "(\(node.text))"
+        case let .unary(token, operand):
+            return "\(token.text)\(operand.text)"
+        case let .binary(token, left, right):
+            return "\(left.text)\(token.text)\(right.text)"
+        }
+    }
+   
+    /// List of tokens representing variables in the expressions
+    var variables: [Token] {
+        switch self {
+        case     .number(_):
+            return []
+        case let .function(_, args):
+            return args.flatMap { $0.variables }
+        case let .variable(token):
+            return [token]
+        case let .parenthesis(_, node, _):
+            return node.variables
+        case let .unary(_, operand):
+            return operand.variables
+        case let .binary(_, left, right):
+            return left.variables + right.variables
+        }
+
+    }
+    
     /// Converts the AST to an actual expression object.
     func toExpression() -> Expression {
         switch self {

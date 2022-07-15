@@ -129,7 +129,6 @@ public class Compiler {
         while !sources.isEmpty {
             //    remove a node n from S
             node = sources.removeFirst()
-            print("Looking at \(node.name)")
             //    add n to L
             sorted.append(node)
             

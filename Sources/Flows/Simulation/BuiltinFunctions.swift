@@ -5,6 +5,8 @@
 //  Created by Stefan Urbanek on 12/07/2022.
 //
 
+import Darwin
+
 // Mark: Builtins
 
 /// List of built-in numeric unary operators.
@@ -59,6 +61,10 @@ public let BuiltinFunctions: [NumericFunction] = [
     },
     NumericFunction(name: "round", signature: ["value"]) { args
         in args[0].rounded()
+    },
+
+    NumericFunction(name: "power", signature: ["value", "exponent"]) { args
+        in pow(args[0], args[1])
     },
 
     // Variadic

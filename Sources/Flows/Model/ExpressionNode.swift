@@ -41,7 +41,7 @@ public class ExpressionNode: Node {
     
     override public var description: String {
         let typename = "\(type(of: self))"
-        return "\(typename)(\(name))"
+        return "\(typename)(\(name), id: \(id!), expr: \(expressionString))"
     }
     
     /// List of incoming links to parameters.
