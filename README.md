@@ -82,8 +82,32 @@ Other statements:
 - ``output NAME, ...`` – list of nodes which values are to be printed to the
   output
   
+### Operators
+
+The following operators are available for the arithmetic expression:
+
+- `+` addition
+- `-` subtraction
+- `*` multiplication
+- `/` division
+- `%` remainder
 
   
+### Built-in functions
+
+The arithmetic expressions might use functions. Here is the list of provided
+numeric functions:
+
+- `abs(number)` absolute value of a number
+- `floor(number)` number rounded down, floor value
+- `ceiling(number)` number rounded up, ceiling value
+- `round(number)` rounded value of a number
+- `sum(number, ...)` sum of multiple values
+- `min(number, ...)` min out of of multiple values
+- `max(number, ...)` max out of of multiple values
+- `power(number, exponent)` power of a number to the exponent
+  
+
 ## Author
 
 Author: [Stefan Urbanek](mailto:stefan.urbanek@gmail.com)
