@@ -168,6 +168,7 @@ public class Lexer {
         // Keywords are case-insensitive
         // let lowercased = scanner.source[startIndex..<scanner.currentIndex].lowercased()
         let text = String(scanner.source[startIndex..<scanner.currentIndex])
+                    .lowercased()
 
         if Lexer.Keywords.contains(text){
             return .keyword
@@ -207,7 +208,7 @@ public class Lexer {
                         advance()
                     }
                 }
-                if !accept(\.isWhitespace) {
+                else if !accept(\.isWhitespace) {
                     break
                 }
             }

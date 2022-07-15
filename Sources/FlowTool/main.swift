@@ -49,7 +49,14 @@ struct Flows: ParsableCommand {
         let model = Model()
         let compiler = ModelLanguageCompiler(model: model)
         
-        try compiler.compile(source: sourceString)
+        do {
+            try compiler.compile(source: sourceString)
+        }
+        catch let error as ParseError {
+            // TODO: Use stderr
+            print("ERROR: \(error)")
+            throw ExitCode(1)
+        }
         
         let outputNodes = compiler.output
         

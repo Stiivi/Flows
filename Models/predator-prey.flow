@@ -1,0 +1,33 @@
+# A simple predator-prey model
+#
+
+# Stocks
+#
+stock fish = 1000
+stock shark = 10
+
+# Variables
+#
+var fish_birth_rate = 0.01
+var shark_birth_rate = 0.6
+var shark_efficiency = 0.0003
+var shark_death_rate = 0.15
+
+# Flows
+#
+flow fish_births = fish * fish_birth_rate
+    to fish
+
+flow fish_deaths = fish * shark_efficiency * shark
+    from fish
+
+flow shark_births = shark * shark_birth_rate * shark_efficiency * fish
+    to shark
+
+flow shark_deaths = shark_death_rate * shark
+    from shark
+
+
+# Nodes that will be printed to the output
+#
+output fish, shark

@@ -9,7 +9,12 @@
 ///
 /// `TextLocation` refers to a line number and a column within that line.
 ///
-public struct TextLocation: CustomStringConvertible {
+public struct TextLocation: CustomStringConvertible, Equatable {
+    // NOTE: This has been separated from Lexer when I had some ideas about
+    // sharing code for two language parsers. Not sure if it makes sense now
+    // and whether it should not be brought back to Lexer. Keeping it here for
+    // now.
+    
     /// Line number in human representation, starting with 1.
     var line: Int = 1
     

@@ -114,7 +114,7 @@ public class ExpressionParser {
                 } while accept(.comma) != nil
             }
             if accept(.rightParen) == nil {
-                throw ParserError.missingRightParenthesis
+                throw SyntaxError.missingRightParenthesis
             }
             return .function(ident, arguments)
         }
@@ -137,7 +137,7 @@ public class ExpressionParser {
         else if let lparen = accept(.leftParen) {
             if let expr = try expression() {
                 guard let rparen = accept(.rightParen) else {
-                    throw ParserError.missingRightParenthesis
+                    throw SyntaxError.missingRightParenthesis
                 }
                 return .parenthesis(lparen, expr, rparen)
             }
@@ -151,7 +151,7 @@ public class ExpressionParser {
         // TODO: Add '!'
         if let op = `operator`("-") {
             guard let right = try unary() else {
-                throw ParserError.expressionExpected
+                throw SyntaxError.expressionExpected
             }
             return .unary(op, right)
         }
@@ -171,7 +171,7 @@ public class ExpressionParser {
         
         while let op = `operator`("*") ?? `operator`("/") ?? `operator`("%"){
             guard let right = try unary() else {
-                throw ParserError.expressionExpected
+                throw SyntaxError.expressionExpected
             }
             expr = .binary(op, expr, right)
         }
@@ -188,7 +188,7 @@ public class ExpressionParser {
         
         while let op = `operator`("+") ?? `operator`("-") {
             guard let right = try factor() else {
-                throw ParserError.expressionExpected
+                throw SyntaxError.expressionExpected
             }
             expr = .binary(op, expr, right)
         }
@@ -203,11 +203,11 @@ public class ExpressionParser {
     
     public func parse() throws -> Expression {
         guard let expr = try expression() else {
-            throw ParserError.expressionExpected
+            throw SyntaxError.expressionExpected
         }
         
         if currentToken?.type != .empty {
-            throw ParserError.unexpectedToken
+            throw SyntaxError.unexpectedToken
         }
         return expr.toExpression()
     }

@@ -1,11 +1,14 @@
 //
-//  ParserError.swift
+//  SyntaxError.swift
 //  
 //
 //  Created by Stefan Urbanek on 13/07/2022.
 //
 
-public enum ParserError: Error, Equatable, CustomStringConvertible {
+
+/// Error thrown by the expression or model language parser.
+///
+public enum SyntaxError: Error, Equatable, CustomStringConvertible {
     // Expression errors
     case invalidCharacterInNumber
     case unexpectedCharacter

@@ -13,7 +13,7 @@ final class ExpressionParserTests: XCTestCase {
     func testEmpty() {
         let parser = ExpressionParser(string: "")
         XCTAssertThrowsError(try parser.parse()) {
-            XCTAssertEqual($0 as! ParserError, ParserError.expressionExpected)
+            XCTAssertEqual($0 as! SyntaxError, SyntaxError.expressionExpected)
         }
     }
 
@@ -79,46 +79,46 @@ final class ExpressionParserTests: XCTestCase {
     func testErrorMissingParenthesis() throws {
         let parser = ExpressionParser(string: "(")
         XCTAssertThrowsError(try parser.parse()) {
-            XCTAssertEqual($0 as! ParserError, ParserError.expressionExpected)
+            XCTAssertEqual($0 as! SyntaxError, SyntaxError.expressionExpected)
         }
     }
     func testErrorMissingParenthesisFunctionCall() throws {
         let parser = ExpressionParser(string: "func(1,2,3")
         XCTAssertThrowsError(try parser.parse()) {
-            XCTAssertEqual($0 as! ParserError, ParserError.missingRightParenthesis)
+            XCTAssertEqual($0 as! SyntaxError, SyntaxError.missingRightParenthesis)
         }
     }
     
     func testUnaryExpressionExpected() throws {
         let parser = ExpressionParser(string: "1 + -")
         XCTAssertThrowsError(try parser.parse()) {
-            XCTAssertEqual($0 as! ParserError, ParserError.expressionExpected)
+            XCTAssertEqual($0 as! SyntaxError, SyntaxError.expressionExpected)
         }
 
         let parser2 = ExpressionParser(string: "-")
         XCTAssertThrowsError(try parser2.parse()) {
-            XCTAssertEqual($0 as! ParserError, ParserError.expressionExpected)
+            XCTAssertEqual($0 as! SyntaxError, SyntaxError.expressionExpected)
         }
     }
     
     func testFactorUnaryExpressionExpected() throws {
         let parser = ExpressionParser(string: "1 *")
         XCTAssertThrowsError(try parser.parse()) {
-            XCTAssertEqual($0 as! ParserError, ParserError.expressionExpected)
+            XCTAssertEqual($0 as! SyntaxError, SyntaxError.expressionExpected)
         }
     }
     
     func testTermExpressionExpected() throws {
         let parser = ExpressionParser(string: "1 +")
         XCTAssertThrowsError(try parser.parse()) {
-            XCTAssertEqual($0 as! ParserError, ParserError.expressionExpected)
+            XCTAssertEqual($0 as! SyntaxError, SyntaxError.expressionExpected)
         }
     }
 
     func testUnexpectedToken() throws {
         let parser = ExpressionParser(string: "1 1")
         XCTAssertThrowsError(try parser.parse()) {
-            XCTAssertEqual($0 as! ParserError, ParserError.unexpectedToken)
+            XCTAssertEqual($0 as! SyntaxError, SyntaxError.unexpectedToken)
         }
     }
 }

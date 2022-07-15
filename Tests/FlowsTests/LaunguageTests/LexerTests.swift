@@ -203,7 +203,15 @@ final class LexerTests: XCTestCase {
             XCTAssertEqual(token.text, keyword)
         }
     }
+    
+    func testCaseInsensitiveKeywords() throws {
+        let lexer = Lexer(string: "StOcK", mode: .model)
+        let token = lexer.next()
+        XCTAssertEqual(token.type, TokenType.keyword)
+        XCTAssertEqual(token.text, "StOcK")
+    }
 
+    
     func testNoAssignmentInExpression() throws {
         let lexer = Lexer(string: "=", mode: .expression)
         let token = lexer.next()

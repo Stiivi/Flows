@@ -23,7 +23,7 @@ public enum NodeError: Error, Equatable {
     /// Parameter used in the expression is unknown.
     case unknownParameter(String)
     /// Error parsing the expression.
-    case expressionError(ParserError)
+    case expressionError(SyntaxError)
 }
 
 /// A structure representing an issue with an expression node.
@@ -196,7 +196,7 @@ public class Compiler {
         do {
             expression = try parser.parse()
         }
-        catch let error as ParserError {
+        catch let error as SyntaxError {
             let issue = ExpressionNodeIssue(node: node, error: .expressionError(error))
             throw CompilerError.nodeIssues([issue])
         }

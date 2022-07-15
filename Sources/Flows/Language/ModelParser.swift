@@ -20,6 +20,20 @@
  */
 
 
+/// Error that occurred during parsing.
+public enum ParseError: Error, Equatable, CustomStringConvertible {
+    /// Syntax error encountered. Information about location is contained in
+    /// the token.
+    case syntaxError(SyntaxError, Token)
+    
+    public var description: String {
+        switch self {
+        case let .syntaxError(error, token):
+            return "Syntax error at \(token.textLocation) around '\(token.text)': \(error)"
+        }
+    }
+}
+
 class ModelParser: ExpressionParser {
     
     public convenience init(string: String) {
@@ -33,7 +47,7 @@ class ModelParser: ExpressionParser {
         guard let token = currentToken else {
             return false
         }
-        if token.type == .keyword && token.text == keyword {
+        if token.type == .keyword && token.text.lowercased() == keyword {
             advance()
             return true
         }
@@ -44,46 +58,46 @@ class ModelParser: ExpressionParser {
 
     func stock() throws -> ModelAST? {
         guard let name = identifier() else {
-            throw ParserError.identifierExpected
+            throw SyntaxError.identifierExpected
         }
         guard accept(.assignment) != nil else {
-            throw ParserError.assignmentExpected
+            throw SyntaxError.assignmentExpected
         }
         guard let expression = try self.expression() else {
-            throw ParserError.expressionExpected
+            throw SyntaxError.expressionExpected
         }
         return .stock(name, expression)
     }
     
     func variable() throws -> ModelAST? {
         guard let name = identifier() else {
-            throw ParserError.identifierExpected
+            throw SyntaxError.identifierExpected
         }
         guard accept(.assignment) != nil else {
-            throw ParserError.assignmentExpected
+            throw SyntaxError.assignmentExpected
         }
         guard let expression = try self.expression() else {
-            throw ParserError.expressionExpected
+            throw SyntaxError.expressionExpected
         }
         return .variable(name, expression)
     }
 
     func flow() throws -> ModelAST? {
         guard let name = identifier() else {
-            throw ParserError.identifierExpected
+            throw SyntaxError.identifierExpected
         }
         guard accept(.assignment) != nil else {
-            throw ParserError.assignmentExpected
+            throw SyntaxError.assignmentExpected
         }
         guard let expression = try self.expression() else {
-            throw ParserError.expressionExpected
+            throw SyntaxError.expressionExpected
         }
         let drainsName: Token?
         let fillsName: Token?
         
         if accept(keyword: "from") {
             guard let name = identifier() else {
-                throw ParserError.identifierExpected
+                throw SyntaxError.identifierExpected
             }
             drainsName = name
         }
@@ -93,7 +107,7 @@ class ModelParser: ExpressionParser {
         
         if accept(keyword: "to") {
             guard let name = identifier() else {
-                throw ParserError.identifierExpected
+                throw SyntaxError.identifierExpected
             }
             fillsName = name
         }
@@ -107,14 +121,14 @@ class ModelParser: ExpressionParser {
         var items: [Token] = []
         
         guard let item = identifier() else {
-            throw ParserError.identifierExpected
+            throw SyntaxError.identifierExpected
         }
 
         items.append(item)
         
         while accept(.comma) != nil {
             guard let item = identifier() else {
-                throw ParserError.identifierExpected
+                throw SyntaxError.identifierExpected
             }
             items.append(item)
         }
@@ -155,10 +169,23 @@ class ModelParser: ExpressionParser {
     }
     
     public func parseModel() throws -> ModelAST {
-        let statements = try self.statements() ?? []
+        let statements: [ModelAST]
+        do {
+            statements = try self.statements() ?? []
+        }
+        catch let error as SyntaxError {
+            guard let token = currentToken else {
+                fatalError("No current token")
+            }
+            throw ParseError.syntaxError(error, token)
+        }
 
-        if currentToken?.type != .empty {
-            throw ParserError.unexpectedToken
+        guard let lastToken = currentToken else {
+            fatalError("No current token")
+        }
+
+        if lastToken.type != .empty {
+            throw ParseError.syntaxError(.unexpectedToken, lastToken)
         }
 
         return .model(statements)

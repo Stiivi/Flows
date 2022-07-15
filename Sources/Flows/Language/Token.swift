@@ -6,7 +6,7 @@
 //
 
 public enum TokenType: Equatable {
-    public typealias TokenError = ParserError
+    public typealias TokenError = SyntaxError
     
     // Expression tokens
     case identifier
@@ -23,7 +23,7 @@ public enum TokenType: Equatable {
     
     // Special tokens
     case empty
-    case error(ParserError)
+    case error(SyntaxError)
 }
 
 /// Token represents a lexical unit of the source.
@@ -32,7 +32,7 @@ public enum TokenType: Equatable {
 /// information is preserved for potential programmatic source code editing
 /// while preserving the user formatting.
 ///
-public struct Token {
+public struct Token: Equatable {
     /// Type of the token as resolved by the lexer
     public let type: TokenType
 
