@@ -24,18 +24,6 @@ struct __NewModelError {
 }
 
 
-public enum ModelError: Error, Equatable {
-    /// Connected node is not used.
-    case unusedInput(String, Node)
-    case unknownParameter(String, Node)
-    
-    /// Cycle in computation graph has been detected.
-    case cycle(Node)
-    
-    /// Debug error (during development only)
-    case unknown(String)
-}
-
 public enum LinkType: String {
     case flow
     case parameter
@@ -57,6 +45,8 @@ public enum LinkType: String {
 ///
 public class Model {
     // TODO: Split into Model (storage) and ModelManager (editing)
+    
+    // MARK: - Graph Meta-Model
     
     /// Label used for links that connect flows with stocks
     static let FlowLinkLabel = "flow"
@@ -80,6 +70,8 @@ public class Model {
     /// Label of a node representing a flow node.
     static let FlowNodeLabel = "Flow"
 
+    // MARK: - Model Variables
+    
     /// Structure that holds all model objects – nodes and links.
     ///
     let graph: Graph
@@ -93,6 +85,9 @@ public class Model {
     /// and transformation.
     ///
     var expressionNodes: [ExpressionNode] { graph.nodes.compactMap { $0 as? ExpressionNode } }
+    
+
+    // MARK: - Derived Variables
     
     /// List of all stock nodes.
     ///

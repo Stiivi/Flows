@@ -11,13 +11,13 @@
 /// simulation of the dynamical system described by the model.
 ///
 public class Simulator {
-    /// Model to be simulated.
-    ///
-    public let model: Model
-    
     /// Compiled version of the model.
     public let compiledModel: CompiledModel
-    
+
+    /// Model to be simulated.
+    ///
+    public var model: Model { compiledModel.model }
+
     /// History of captured values of the simulation.
     public var history: [SimulationState] = []
     
@@ -29,18 +29,30 @@ public class Simulator {
     
     /// Creates a new simulator with given model.
     ///
-    public init(model: Model) {
+    public init(compiledModel: CompiledModel) {
         // FIXME: Do not compile here. Get directly a compiled model.
-        self.model = model
-        do {
-            let compiler = Compiler(model: model)
-            try self.compiledModel = compiler.compile()
-        }
-        catch {
-            fatalError("Model compilation error: \(error)")
-        }
+        self.compiledModel = compiledModel
     }
    
+    /// Convenience initialiser for a valid model.
+    ///
+    /// - Note: The model is expected to be valid and compilable, otherwise the
+    /// method fails.
+    ///
+    public convenience init(model: Model) {
+        let compiler = Compiler(model: model)
+        let compiledModel: CompiledModel
+        
+        do {
+            compiledModel = try compiler.compile()
+        }
+        catch {
+            fatalError("Model compilation failed: \(error)")
+        }
+        
+        self.init(compiledModel: compiledModel)
+    }
+    
     /// Runs the simulation for given number of steps and return last state
     /// of the simulation.
     ///

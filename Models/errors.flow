@@ -1,0 +1,21 @@
+# Errors – model that contains multiple errors
+#
+# This file is to demonstrate error reporting
+#
+
+stock box = 10 * nothing * another
+
+
+# A cycle of three nodes
+#
+var a = b
+var b = c
+var c = a
+
+
+flow pour = 1
+     from somewhere
+     to anywhere
+
+
+output a, b, c, something

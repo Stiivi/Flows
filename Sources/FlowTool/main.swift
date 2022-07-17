@@ -47,22 +47,40 @@ struct Flows: ParsableCommand {
         sourceString = try String(contentsOf: sourceURL)
 
         let model = Model()
-        let compiler = ModelLanguageCompiler(model: model)
+        let sourceCompiler = ModelLanguageCompiler(model: model)
         
         do {
-            try compiler.compile(source: sourceString)
+            try sourceCompiler.compile(source: sourceString)
         }
         catch let error as ParseError {
             // TODO: Use stderr
             print("ERROR: \(error)")
             throw ExitCode(1)
         }
+        catch let error as ModelSourceError {
+            for message in error.messages {
+                print("ERROR: \(message)")
+            }
+        }
         
-        let outputNodes = compiler.output
+        let outputNodes = sourceCompiler.output
+        
+        let compiler = Compiler(model: model)
+        let compiledModel: CompiledModel
+        
+        do {
+            compiledModel = try compiler.compile()
+        }
+        catch let error as ModelCompilationError {
+            for message in error.messages {
+                print("ERROR: \(message)")
+            }
+            throw ExitCode(1)
+        }
         
 //         model.debugPrint()
         
-        let simulator = Simulator(model: model)
+        let simulator = Simulator(compiledModel: compiledModel)
         
         simulator.run(steps: steps)
         

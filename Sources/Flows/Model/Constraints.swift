@@ -29,8 +29,7 @@ public class SameDrainFill: NodePredicate {
 }
 
 
-/*
- 
+/**
  Constraints - list of rules that have to be satisfied in the model graph.
  
  Types:

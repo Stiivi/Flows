@@ -35,12 +35,22 @@ public struct CompiledExpressionNode {
 /// Compiled model has graph validated, references resolved and nodes ordered.
 ///
 public class CompiledModel {
+    /// The model that was compiled into this compiled model
+    let model: Model
+    
     /// Topologically sorted nodes
     let sortedNodes: [CompiledExpressionNode]
 
-    var stocks: [Stock] { sortedNodes.compactMap { $0 as? Stock } }
+//    var stocks: [Stock] { sortedNodes.compactMap { $0 as? Stock } }
     
-    public init(nodes: [CompiledExpressionNode]) {
+    /// Creates a compiled model.
+    ///
+    /// - Parameters:
+    ///     - model: Model from which this object was compiled
+    ///     - nodes: list of topologically sorted expression nodes
+    ///
+    public init(model: Model, nodes: [CompiledExpressionNode]) {
+        self.model = model
         self.sortedNodes = nodes
     }
 }

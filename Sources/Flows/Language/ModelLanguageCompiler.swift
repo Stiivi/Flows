@@ -5,6 +5,11 @@
 //  Created by Stefan Urbanek on 14/07/2022.
 //
 
+
+public struct ModelSourceError: Error {
+    public let messages: [String]
+}
+
 public class ModelLanguageCompiler {
     public let model: Model
     /// Links to be created between flows and stocks that the flow drains
@@ -27,7 +32,7 @@ public class ModelLanguageCompiler {
         let ast = try parser.parseModel()
         
         if case let .model(statements) = ast {
-            compile(statements: statements)
+            try compile(statements: statements)
         }
         else {
             fatalError("Parser did not return a model")
@@ -75,7 +80,9 @@ public class ModelLanguageCompiler {
         output = tokens.map { $0.text }
     }
 
-    func compile(statements: [ModelAST]) {
+    func compile(statements: [ModelAST]) throws {
+        var errors: [String] = []
+
         for statement in statements {
             switch statement {
             case let .stock(name, expression):
@@ -93,21 +100,24 @@ public class ModelLanguageCompiler {
         
         for (flow, name) in fillLinks {
             guard let target = model[name] else {
-                fatalError("Unknown target '\(name)' for flow '\(flow.name)'")
+                errors.append("Unknown target '\(name)' for flow '\(flow.name)'")
+                continue
             }
             model.connectFlow(from: flow, to: target)
         }
 
         for (flow, name) in drainLinks {
             guard let origin = model[name] else {
-                fatalError("Unknown origin '\(name)' for flow '\(flow.name)'")
+                errors.append("Unknown origin '\(name)' for flow '\(flow.name)'")
+                continue
             }
             model.connectFlow(from: origin, to: flow)
         }
         
         for (node, name) in parameterLinks {
             guard let origin = model[name] else {
-                fatalError("Unknown parameter '\(name)' in node '\(node.name)'")
+                errors.append("Unknown parameter '\(name)' in node '\(node.name)'")
+                continue
             }
             
             model.connect(from: origin, to: node)
@@ -115,11 +125,13 @@ public class ModelLanguageCompiler {
         
         for name in output {
             if model[name] == nil {
-                fatalError("Unknown node for output: \(name)")
+                errors.append("Unknown node in output: '\(name)'")
             }
         }
+        
+        if !errors.isEmpty {
+            throw ModelSourceError(messages: errors)
+        }
     }
-    
-
     
 }

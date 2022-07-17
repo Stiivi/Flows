@@ -159,7 +159,7 @@ public class NumericUnaryOperator: FunctionProtocol {
     ///
     public func apply(_ arguments: [Value] ) -> Value {
         guard arguments.count == 1 else {
-            fatalError("Invalid number of arguments (\(arguments.count) to a binary operator.")
+            fatalError("Invalid number of arguments (\(arguments.count) to a unary operator.")
         }
 
         let operand = arguments[0].doubleValue()!
