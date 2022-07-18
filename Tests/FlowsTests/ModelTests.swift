@@ -163,15 +163,12 @@ final class ModelTests: XCTestCase {
         
         let violations = model.constraintChecker.check(graph: model.graph)
 
-        XCTAssertEqual(violations.count, 1)
-            
-        if let violation = violations.first {
-            XCTAssertEqual(violation.name, "forbidden_flow_to_flow")
+        XCTAssertEqual(violations.count, 2)
+
+        if violations.count >= 2 {
+            XCTAssertEqual(violations[0].name, "flow_fill_is_stock")
+            XCTAssertEqual(violations[1].name, "flow_drain_is_stock")
         }
-        else {
-            XCTFail()
-        }
-        
     }
     
     

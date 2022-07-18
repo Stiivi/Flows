@@ -91,17 +91,50 @@ let ModelConstraints: [Constraint] = [
         }
     ),
     
+//    LinkConstraint(
+//        name: "forbidden_flow_to_flow",
+//        description: """
+//                     There must be no link of type "flow" from a flow to \
+//                     another flow.
+//                     """,
+//        match: LinkObjectPredicate(
+//            origin: LabelPredicate(all: Model.FlowNodeLabel),
+//            target: LabelPredicate(all: Model.FlowNodeLabel),
+//            link: LabelPredicate(all: Model.FlowLinkLabel)
+//        ),
+//        requirement: RejectAll()
+//    ),
+
+    // MARK: - Flows
+    
     LinkConstraint(
-        name: "forbidden_flow_to_flow",
+        name: "flow_fill_is_stock",
         description: """
-                     There must be no link of type "flow" from a flow to \
-                     another flow.
+                     Flow must drain (from) a stock, no other kind of node.
                      """,
         match: LinkObjectPredicate(
-            origin: LabelPredicate(all: Model.FlowNodeLabel),
+            origin: LabelPredicate(none: Model.StockNodeLabel),
             target: LabelPredicate(all: Model.FlowNodeLabel),
             link: LabelPredicate(all: Model.FlowLinkLabel)
         ),
         requirement: RejectAll()
-    )
+    ),
+        
+    LinkConstraint(
+        name: "flow_drain_is_stock",
+        description: """
+                     Flow must fill (into) a stock, no other kind of node.
+                     """,
+        match: LinkObjectPredicate(
+            origin: LabelPredicate(all: Model.FlowNodeLabel),
+            target: LabelPredicate(none: Model.StockNodeLabel),
+            link: LabelPredicate(all: Model.FlowLinkLabel)
+        ),
+        requirement: RejectAll()
+    ),
+    
+    // TODO: Flow fill labels must be [Flow, fill]
+    // TODO: Flow drain labels must be [Flow, drain]
+
+    
 ]

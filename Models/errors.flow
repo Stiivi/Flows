@@ -3,7 +3,8 @@
 # This file is to demonstrate error reporting
 #
 
-stock box = 10 * nothing * another
+# The following stock expression refers to unknown parameters
+stock box = 10 * unknown_a + unknown_b
 
 
 # A cycle of three nodes
@@ -12,10 +13,26 @@ var a = b
 var b = c
 var c = a
 
+# The following from drains and fills unknown stocks
 
 flow pour = 1
-     from somewhere
-     to anywhere
+     from first_unknown
+     to second_unknown
 
 
+# The following statement refers to 'something' which is undefined
+#
 output a, b, c, something
+
+
+# Error: flow from a variable
+#
+# The following flow violates two constraints:
+# - flow MUST drain a stock: in_var is not a stock
+# - flow MUST fill a stock: to_var is not a stock
+#
+var in_var = 0
+var to_var = 0
+flow between_vars = 1
+    from in_var
+    to to_var

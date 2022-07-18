@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct ConstraintViolation: CustomStringConvertible {
+public struct ConstraintViolation: CustomStringConvertible, CustomDebugStringConvertible {
     // TODO: Use constraint reference instead of just a name
     public let constraint: Constraint
     
@@ -15,10 +15,19 @@ public struct ConstraintViolation: CustomStringConvertible {
     public let objects: [GraphObject]
 
     public var name: String { constraint.name }
+
     public var description: String {
+        if let desc = constraint.description {
+            return "\(name): \(desc)"
+        }
+        else {
+            return "\(name) (no detailed violation description)"
+        }
+    }
+    public var debugDescription: String {
         "ConstraintViolation(\(name), \(objects))"
     }
-    
+
     public var nodes:[Node] {
         objects.compactMap { $0 as? Node }
     }

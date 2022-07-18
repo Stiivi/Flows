@@ -23,7 +23,9 @@ public protocol Constraint {
     /// Checks whether the graph satisfies the constraint. Returns a list of
     /// graph objects that violate the constraint
     func check(_ graph: Graph) -> [GraphObject]
-
+    
+    // TODO: Rename to non-conflicting attribute, like "message"
+    var description: String? { get }
 }
 
 public protocol ObjectConstraintRequirement: LinkConstraintRequirement, NodeConstraintRequirement {
@@ -103,9 +105,11 @@ public class ObjectConstraint: Constraint {
     public let name: String
     public let match: Predicate
     public let requirement: ObjectConstraintRequirement
+    public let description: String?
     
-    public init(name: String, match: Predicate, requirement: ObjectConstraintRequirement) {
+    public init(name: String, description: String? = nil, match: Predicate, requirement: ObjectConstraintRequirement) {
         self.name = name
+        self.description = description
         self.match = match
         self.requirement = requirement
     }

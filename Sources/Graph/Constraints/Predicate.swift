@@ -19,6 +19,9 @@ public class LabelPredicate: NodePredicate, LinkPredicate  {
         case any
         /// Match all of the labels specified in the predicate
         case all
+        // #TODO: Replace `none` with negation predicate
+        /// Match none of the labels
+        case none
     }
     
     /// Creates a predicate from a list of labels to be matched.
@@ -33,6 +36,14 @@ public class LabelPredicate: NodePredicate, LinkPredicate  {
         self.init(labels: Set(labels), mode: .all)
     }
 
+    /// Creates a predicate that matches objects which do not contain any of
+    /// the labels.
+    ///
+    public convenience init(none labels: String...) {
+        // # TODO: Replace this with negation predicate
+        self.init(labels: Set(labels), mode: .none)
+    }
+
     /// Creates a predicate from a list of labels to be matched.
     ///
     public init(labels: LabelSet, mode: MatchMode) {
@@ -43,12 +54,17 @@ public class LabelPredicate: NodePredicate, LinkPredicate  {
     public func match(_ node: Node) -> Bool {
         switch mode {
         case .all: return node.contains(labels: labels)
-        case .any: return labels.contains { node.contains(label: $0) }
+        case .any: return !labels.intersection(node.labels).isEmpty
+        case .none: return labels.intersection(node.labels).isEmpty
         }
     }
 
     public func match(_ link: Link) -> Bool {
-        return self.labels.isSubset(of: link.labels)
+        switch mode {
+        case .all: return link.contains(labels: labels)
+        case .any: return !labels.intersection(link.labels).isEmpty
+        case .none: return labels.intersection(link.labels).isEmpty
+        }
     }
 }
 
@@ -76,7 +92,6 @@ extension Predicate {
     public func or(_ predicate: Predicate) -> CompoundPredicate {
         return CompoundPredicate(.or, predicates: self, predicate)
     }
-
 }
 
 public class CompoundPredicate: Predicate {
@@ -93,5 +108,15 @@ public class CompoundPredicate: Predicate {
         case .and: return predicates.allSatisfy{ $0.match(object) }
         case .or: return predicates.contains{ $0.match(object) }
         }
+    }
+}
+
+public class NegationPredicate: Predicate {
+    public let predicate: Predicate
+    public init(_ predicate: any Predicate) {
+        self.predicate = predicate
+    }
+    public func match(_ object: GraphObject) -> Bool {
+        return !predicate.match(object)
     }
 }

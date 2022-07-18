@@ -37,6 +37,26 @@ public struct ModelCompilationError: Error {
             for node in expressionNodes {
                 messages.append("Node '\(node.name)' violates constraint '\(violation.name)'")
             }
+            
+            let links = violation.objects.compactMap { $0 as? Link }
+            for link in links {
+                let originTitle: String
+                let targetTitle: String
+                if let node = link.origin as? ExpressionNode {
+                    originTitle = node.name
+                }
+                else {
+                    originTitle = "(unknown node)"
+                }
+
+                if let node = link.target as? ExpressionNode {
+                    targetTitle = node.name
+                }
+                else {
+                    targetTitle = "(unknown node)"
+                }
+                messages.append("Link between '\(originTitle)' and '\(targetTitle)' violates constraint: \(violation.description)")
+            }
         }
         
         for link in cycleError?.links ?? [] {
