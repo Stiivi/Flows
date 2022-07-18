@@ -250,7 +250,6 @@ public class Graph {
         link.graph = nil
     }
     
-
     
     /// Removes a specific link from the graph. Link must exist in the graph.
     ///

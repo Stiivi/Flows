@@ -74,7 +74,7 @@ public class Model {
     
     /// Structure that holds all model objects – nodes and links.
     ///
-    let graph: Graph
+    public let graph: Graph
     
     /// Sequence of IDs that are assigned to the model objects for user-facing
     /// identification.
@@ -207,7 +207,15 @@ public class Model {
     @discardableResult
     public func connectFlow(from origin: Node, to target: Node) -> Link {
         // FIXME: Validate
-        return connect(from: origin, to: target, as: .flow)
+        
+        var labels: Set<Label> = []
+        if origin is Stock {
+            labels.insert("drains")
+        }
+        if target is Stock {
+            labels.insert("fills")
+        }
+        return connect(from: origin, to: target, as: .flow, labels: labels)
     }
 
 

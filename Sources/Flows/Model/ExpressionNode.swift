@@ -52,4 +52,11 @@ public class ExpressionNode: Node {
 
     }
         
+    public override var attributeKeys: [AttributeKey] { ["name"] }
+    public override func attribute(forKey key: AttributeKey) -> AttributeValue? {
+        switch key {
+        case "name": return name
+        default: return nil
+        }
+    }
 }

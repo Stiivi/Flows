@@ -80,6 +80,16 @@ open class GraphObject: Identifiable, CustomStringConvertible {
         
         return "Object(id: \(idString), labels: \(labels.sorted())])"
     }
+    
+    // MARK: - Prototyping/Experimental
+
+    open var attributeKeys: [AttributeKey] {
+        return []
+    }
+    
+    open func attribute(forKey key: String) -> AttributeValue? {
+        return nil
+    }
 }
 
 extension GraphObject: Hashable {
@@ -91,3 +101,5 @@ extension GraphObject: Hashable {
         hasher.combine(id)
     }
 }
+
+
