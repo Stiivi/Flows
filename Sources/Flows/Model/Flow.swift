@@ -4,6 +4,7 @@
 //
 //  Created by Stefan Urbanek on 13/06/2022.
 //
+import Graph
 
 /// Object representing a flow.
 ///
@@ -12,6 +13,8 @@
 /// outflow - stock to which the node fills.
 ///
 public class Flow: ExpressionNode {
+    // TODO: Add priority: Int to explicitly denote flow priority when draining a non-negative stocks
+    
     /// Stock that the flow drains, if the flow input is connected.
     ///
     /// - Note: If there are multiple stocks connected, the model has no
@@ -51,5 +54,6 @@ public class Flow: ExpressionNode {
             return nil
         }
     }
+    
 }
 

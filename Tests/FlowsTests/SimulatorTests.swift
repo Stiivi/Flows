@@ -2,7 +2,48 @@ import XCTest
 @testable import Flows
 import System
 
-final class FlowsTests: XCTestCase {
+final class SimulatorTests: XCTestCase {
+    func testNonNegative() throws {
+//        try XCTSkipIf(true, "Non-negative stocks are not yet implemented")
+        let model = Model()
+        let stock = Stock(name: "stock", float: 5)
+        stock.allowsNegative = false
+        
+        model.add(stock)
+        model.add(Flow(name: "flow", expression: "10"))
+        model.connectFlow(from: model["stock"]!, to: model["flow"]!)
+        
+        let simulator = Simulator(model: model)
+        let state = simulator.run(steps: 1)
+        XCTAssertEqual(state["stock"], 0)
+    }
+    func testNonNegativeToTwo() throws {
+//        try XCTSkipIf(true, "Non-negative stocks are not yet implemented")
+        let model = Model()
+        let stock = Stock(name: "stock", float: 5)
+
+        stock.allowsNegative = false
+
+        model.add(stock)
+
+        model.add(Stock(name: "first", float: 0))
+        model.add(Stock(name: "second", float: 0))
+        
+        model.add(Flow(name: "first_flow", expression: "10"))
+        model.connectFlow(from: model["stock"]!, to: model["first_flow"]!)
+        model.connectFlow(from: model["first_flow"]!, to: model["first"]!)
+
+        model.add(Flow(name: "second_flow", expression: "10"))
+        model.connectFlow(from: model["stock"]!, to: model["second_flow"]!)
+        model.connectFlow(from: model["second_flow"]!, to: model["second"]!)
+
+        let simulator = Simulator(model: model)
+        let state = simulator.run(steps: 1)
+        XCTAssertEqual(state["stock"], 0.0)
+        XCTAssertEqual(state["first"], 5.0)
+        XCTAssertEqual(state["second"], 0.0)
+    }
+    
     func testFlow() throws {
         let model = Model()
         

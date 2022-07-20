@@ -10,7 +10,14 @@
 /// Simulator is an object that given a valid model performs an iterative
 /// simulation of the dynamical system described by the model.
 ///
+/// - Note: Currently we are not using any solver. The simulation is just step
+/// based.
+///
+/// - ToDo: Add solvers: Euler, RK and RK4
+///
 public class Simulator {
+    // TODO: Add solvers
+    
     /// Compiled version of the model.
     public let compiledModel: CompiledModel
 
@@ -24,8 +31,8 @@ public class Simulator {
     /// Current step of the simulation.
     public var currentStep: Int = 0
     
-    /// Last state of the simulation.
-    var last: SimulationState? { history.last }
+    /// State of the simulation at the previous step.
+    var current: SimulationState { history.last! }
     
     /// Creates a new simulator with given model.
     ///
@@ -56,6 +63,7 @@ public class Simulator {
     /// Runs the simulation for given number of steps and return last state
     /// of the simulation.
     ///
+    @discardableResult
     public func run(steps: Int) -> SimulationState {
         guard steps > 0 else {
             fatalError("Number of simulation steps should be > 0")
@@ -72,26 +80,38 @@ public class Simulator {
             state = step()
             history.append(state)
         }
-        return last!
+        return current
     }
     
-    /// Initialize the simulation
+    /// Initialise the simulation
+    ///
+    /// Each expression node (stock, flow, auxiliary) in the model is evaluated
+    /// to its value.
+    ///
+    /// The computed values are store in the history as initial value.
+    ///
     func initialize() {
         let state = SimulationState(step: currentStep)
+        history.removeAll()
         
         for node in compiledModel.sortedNodes {
             do {
-                state.values[node.name] = try evaluate(node: node, state: state)
+                state.values[node.node] = try evaluate(node: node, state: state)
             }
             catch {
                 fatalError("Evaluation failed: \(error)")
             }
         }
-        history.removeAll()
         history.append(state)
         currentStep = 0
     }
     
+    /// Reset the simulation
+    ///
+    /// - Note: This method just calls `initialize()`. It is here only for
+    /// semantic reasons at this moment. In the caller, it marks the difference between
+    /// initialisation and actual reset of the simulation.
+    ///
     public func reset() {
         // TODO: Unite with initialize()
         // NOTE: This is here for now, because there are multiple pathways of resetting
@@ -106,9 +126,10 @@ public class Simulator {
     func evaluate() -> SimulationState {
         let state = SimulationState(step: currentStep)
         
+        // FIXME: This is not quite correct, we should consider aux and flows only
         for node in compiledModel.sortedNodes {
             do {
-                state.values[node.name] = try evaluate(node: node, state: last!)
+                state[node.node] = try evaluate(node: node, state: current)
             }
             catch {
                 fatalError("Evaluation failed: \(error)")
@@ -129,8 +150,8 @@ public class Simulator {
         }
         evaluator.functions = functions
         
-        for (key, value) in state.values {
-            evaluator.variables[key] = .double(value)
+        for (name, value) in state.variables {
+            evaluator.variables[name] = .double(value)
         }
 
         let value = try evaluator.evaluate(node.expression)
@@ -139,23 +160,76 @@ public class Simulator {
     
     /// Perform one step of the simulation.
     ///
+    /// - ToDo: This is preliminary implementation of a simulation step.
+    ///
     func step() -> SimulationState {
+        // FIXME: IMPORTANT! This is corrupting the current state, add "estimated" state instead
         currentStep += 1
         
         let newState = evaluate()
-        
+
         for stock in model.stocks {
-            var delta: Double = 0
+            var totalInflow: Double = 0.0
+            var totalOutflow: Double = 0.0
             
-            for inflow in stock.inflows {
-                delta += last![inflow.name]!
+            if stock.allowsNegative {
+                for inflow in stock.inflows {
+                    totalInflow += current[inflow]!
+                }
+                
+                for outflow in stock.outflows {
+                    totalOutflow += current[outflow]!
+                }
             }
-            
-            for outflow in stock.outflows {
-                delta -= last![outflow.name]!
+            else {
+                // We have:
+                // - current stock values
+                // - expected flow values
+                // We need:
+                // - get actual flow values based on stock non-negative constraint
+                
+                // TODO: Simplify this
+                // TODO: Use Flow.priority (once the attribute is added)
+                // TODO: Add other ways of draining non-negative stocks, not only priority based
+                
+                // We are looking at a stock, and we know expected inflow and
+                // expected outflow. Outflow must be less or equal to the
+                // expected inflow plus current state of the stock.
+                for inflow in stock.inflows {
+                    totalInflow += current[inflow]!
+                }
+
+                // Maximum outflow that we can drain from the stock. It is the
+                // current value of the stock with aggregate of all inflows.
+                //
+                var availableOutflow: Double = current[stock]! + totalInflow
+                
+                // We assume that outflows get their share by their priority
+                // (currently arbitrary, as provided by the model).
+                for outflow in stock.outflows {
+                    // Assumed outflow value can not be greater than what we
+                    // have in the stock. We either take it all or whatever is
+                    // expected to be drained.
+                    //
+                    let actualOutflow = min(availableOutflow, current[outflow]!)
+                    
+                    totalOutflow += actualOutflow
+                    // We drain the stock
+                    availableOutflow -= actualOutflow
+                    
+                    // Adjust the flow value to the value actually drained,
+                    // so we do not fill another stock with something that we
+                    // did not drain.
+                    //
+                    // FIXME: We are changing the current state, we should be changing some "estimated state"
+                    current[outflow] = actualOutflow
+
+                    assert(current[outflow]! >= 0.0)
+                }
             }
-            
-            newState.values[stock.name]! = last![stock.name]! + delta
+
+            let delta = totalInflow - totalOutflow
+            newState[stock] = current[stock]! + delta
         }
         return newState
     }

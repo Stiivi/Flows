@@ -21,18 +21,20 @@ stock cup = 0
 # Rate at which we are pouring from the kettle to the cup
 #
 var rate = 10
-var spill = 0.1
+var spill_rate = 0.1
 
 
 # Flows
 #
 # Pouring from the kettle to the cup at given rate, spilling some water.
 #
-flow pour = rate - (rate * spill)
+flow pour = rate
      from kettle
      to cup
 
-
+flow spill = kettle * spill_rate
+    from kettle
+    
 # Values to be printed to the output
 #
 output kettle, cup

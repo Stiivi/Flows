@@ -13,11 +13,12 @@ import Graph
 /// Abstract class that represents a node with an arithmetic expression.
 ///
 public class ExpressionNode: Node {
-    static let ParameterSelector = LinkSelector(Model.ParameterLinkLabel, direction: .incoming)
-
+    // TODO: Add source/origin - where the node comes from
+    
     /// Name of the node
     public var name: String
     
+    // TODO: Use both: string and expression -> depending where is the source of it
     /// Arithmetic expression
     var expressionString: String
     
@@ -47,7 +48,7 @@ public class ExpressionNode: Node {
     /// List of incoming links to parameters.
     ///
     public var incomingParameterNodes: [ExpressionNode] {
-        let links = linksWithSelector(Self.ParameterSelector)
+        let links = linksWithSelector(Model.ParameterSelector)
         return links.compactMap { $0.origin as? ExpressionNode }
 
     }

@@ -59,6 +59,9 @@ public class Model {
     /// a flow.
     static let OutflowSelector = LinkSelector(Model.FlowLinkLabel, direction: .outgoing)
 
+    /// Selector that defines links from/to parameter nodes
+    static let ParameterSelector = LinkSelector(Model.ParameterLinkLabel, direction: .incoming)
+
     /// Label used for links that connect auxiliary nodes with other nodes
     static let ParameterLinkLabel = "parameter"
 
