@@ -108,6 +108,29 @@ numeric functions:
 - `power(number, exponent)` power of a number to the exponent
   
 
+## Build and Install
+
+This software is written in [Swift](https://www.swift.org/), download it [here](https://www.swift.org/download/).
+
+Dependencies:
+
+- [Swift Argument Parser](https://github.com/apple/swift-argument-parser) (for the `flow` command-line tool)
+
+The dependencies are automatically downloaded by the Swift package manager.
+
+### Build
+
+```sh
+swift build
+```
+
+### Run (in the source directory)
+
+```sh
+swift run flow
+```
+
+
 ## Author
 
 Author: [Stefan Urbanek](mailto:stefan.urbanek@gmail.com)
