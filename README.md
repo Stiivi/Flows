@@ -2,7 +2,7 @@
 
 Dynamical model simulation library.
 
-A prototype.
+A prototype. A toy.
 
 
 ## Flow Tool and Flow Language
@@ -77,10 +77,16 @@ Model statements:
 - ``var NAME = EXPRESSION`` - defines an auxiliary node, a variable or
     a transformation
 
+Note on `stock`: Currently all stocks defined in the language are considered to
+be non-negative. Library provides functionality for allowing negative values, it
+has not yet been reflected in the language syntax.
+
+
 Other statements:
 
 - ``output NAME, ...`` – list of nodes which values are to be printed to the
   output
+  
   
 ### Operators
 
@@ -106,7 +112,23 @@ numeric functions:
 - `min(number, ...)` min out of of multiple values
 - `max(number, ...)` max out of of multiple values
 - `power(number, exponent)` power of a number to the exponent
-  
+ 
+### On The Language
+
+The objective of the language bundled together with the package is to provide a
+simple interface to the library. The textual language is not intended to provide
+all the functionality of the library. The main objective of the modelling part
+of the library is to serve interactive graphical applications.
+
+The intended inter-change format for sharing the models models will be in a
+form of a graph that will encode the model with all the relevant details.
+
+
+## Simulation
+
+The current simulation method is very simple: step-based simulation. Other
+solvers (Euler, RK) are planned to be added later.
+
 
 ## Build and Install
 
@@ -114,15 +136,18 @@ This software is written in [Swift](https://www.swift.org/), download it [here](
 
 Dependencies:
 
-- [Swift Argument Parser](https://github.com/apple/swift-argument-parser) (for the `flow` command-line tool)
+- [Swift Argument Parser](https://github.com/apple/swift-argument-parser)
+  (for the `flow` command-line tool)
 
 The dependencies are automatically downloaded by the Swift package manager.
+
 
 ### Build
 
 ```sh
 swift build
 ```
+
 
 ### Run (in the source directory)
 
