@@ -140,18 +140,14 @@ This software is written in [Swift](https://www.swift.org/), download it [here](
 
 All platforms:
 
-- [Swift Argument Parser](https://github.com/apple/swift-argument-parser)
-  (for the `flow` command-line tool)
+- [Swift Argument Parser](https://github.com/apple/swift-argument-parser) - for
+  the `flow` command-line tool
+- [Swift System](https://github.com/apple/swift-system) – for reading and
+  writing files
 
-The above dependencies are automatically downloaded by the Swift package manager.
+The above dependencies are automatically downloaded by the Swift package
+manager.
 
-Non-MacOS platforms (Linux):
-
-- [swift-corelibs-foundation](https://github.com/apple/swift-corelibs-foundation)
-  aka Foundation
-
-The Foundation is a library that needs to be installed on its own. Swift package
-manager does not handle this dependency.
 
 ### Build
 

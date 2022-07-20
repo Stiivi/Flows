@@ -7,23 +7,7 @@
 
 import ArgumentParser
 import Flows
-import Foundation
-
-func coalesceURL(_ source: String) -> URL {
-    guard let testURL = URL(string: source) else {
-        fatalError("Invalid resource reference: \(source)")
-    }
-    
-    let sourceURL: URL
-
-    if testURL.scheme == nil {
-        sourceURL = URL(fileURLWithPath: source)
-    }
-    else {
-        sourceURL = testURL
-    }
-    return sourceURL
-}
+import SystemPackage
 
 // The Command
 // ------------------------------------------------------------------------

@@ -7,6 +7,7 @@
 
 import Flows
 import ArgumentParser
+import SystemPackage
 
 extension Flows {
     struct Run: ParsableCommand {
@@ -22,16 +23,15 @@ extension Flows {
         var source: String
 
         mutating func run() throws {
-            let sourceURL = coalesceURL(source)
-            let sourceString: String
+            let outputNodes: [String]
 
-            sourceString = try String(contentsOf: sourceURL)
 
-            let model = Model()
-            let sourceCompiler = ModelLanguageCompiler(model: model)
+            let model: Model
             
             do {
-                try sourceCompiler.compile(source: sourceString)
+                let result = try modelFromFile(path: FilePath(source))
+                model = result.model
+                outputNodes = result.output
             }
             catch let error as ParseError {
                 // TODO: Use stderr
@@ -42,9 +42,8 @@ extension Flows {
                 for message in error.messages {
                     print("ERROR: \(message)")
                 }
+                throw ExitCode(1)
             }
-            
-            let outputNodes = sourceCompiler.output
             
             let compiler = Compiler(model: model)
             let compiledModel: CompiledModel

@@ -5,7 +5,8 @@
 //  Created by Stefan Urbanek on 2021/10/21.
 //
 
-import Foundation
+import SystemPackage
+
 
 // NOTE: This is simple one-use exporter.
 // TODO: Make this export to a string and make it export by appending content.
@@ -14,7 +15,7 @@ import Foundation
 /// dot language file.
 public class DotExporter {
     /// Path of the file to be exported to.
-    let url: URL
+    let path: FilePath
 
     /// Name of the graph in the output file.
     let name: String
@@ -37,8 +38,8 @@ public class DotExporter {
     ///     as a label of nodes in the output. If not set then node ID will be
     ///     used.
     ///
-    public init(url: URL, name: String, labelAttribute: String? = nil, style: DotStyle? = nil) {
-        self.url = url
+    public init(path: FilePath, name: String, labelAttribute: String? = nil, style: DotStyle? = nil) {
+        self.path = path
         self.name = name
         self.labelAttribute = labelAttribute
         self.style = style
@@ -84,7 +85,12 @@ public class DotExporter {
 
         output += formatter.footer()
         
-        try output.write(to: url, atomically: true, encoding: .utf8)
+        let file = try FileDescriptor.open(path, .writeOnly,
+                                           options: [.truncate, .create],
+                                           permissions: .ownerReadWrite)
+        try file.closeAfter {
+          _ = try file.writeAll(output.utf8)
+        }
     }
     
     public func format(node: Node) -> [String:String] {

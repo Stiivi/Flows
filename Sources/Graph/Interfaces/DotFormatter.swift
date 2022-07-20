@@ -7,8 +7,6 @@
 // 2022-01-27 - Changed from DotWriter to DotFormatter
 
 
-import Foundation
-
 /// Type of the graph – directed or undirected.
 ///
 public enum DotGraphType {
@@ -29,6 +27,23 @@ public enum DotGraphType {
     }
 }
 
+extension Character {
+    /// Flag whether the character is valid dot identifier character
+    var isDotIdentifier: Bool {
+        let allowedRange = Character(UnicodeScalar(128))...Character(UnicodeScalar(255))
+        if ((isLetter || isNumber) && isASCII) // Alphanumeric
+            || allowedRange.contains(self)
+            || self == "_" {
+            // Alphanumeric character
+            return true
+        }
+        else {
+            return false
+            
+        }
+    }
+}
+
 /// Formatter for GraphViz DOT file format statements. Use to produce strings
 /// representing various DOT file parts such as nodes, links and graph headers.
 ///
@@ -36,17 +51,6 @@ public class DotFormatter {
     let name: String
     let type: DotGraphType
     
-    /// Character set of characters that are valid for an ID (identifier), for
-    /// example a node ID or an attribute name.
-    ///
-    public static let identifierCharacters: CharacterSet = DotFormatter._makeIdentifierCharacterSet()
-
-    static func _makeIdentifierCharacterSet() -> CharacterSet {
-        var charset = CharacterSet.alphanumerics
-        charset.insert(charactersIn:UnicodeScalar(128)...UnicodeScalar(255))
-        charset.insert(UnicodeScalar("_"))
-        return charset
-    }
 
     /// Quote an identifier, if needed.
     /// According to the Dot documentation an ID is:
@@ -56,10 +60,10 @@ public class DotFormatter {
     /// - a numeral [-]?(.[0-9]+ | [0-9]+(.[0-9]*)? );
     /// - any double-quoted string ("...") possibly containing escaped quotes
     ///   (\")1;
-    /// - an HTML string (<...>).
+    /// - an HTML string (<...>).  (not implemented)
     ///
     static func quote(_ string: String) -> String {
-        // TODO: Do not fake the numerals
+        // TODO: We are not handling proper numerals, we just handle alphanumerics
         /*
         ID is:
 
@@ -69,6 +73,8 @@ public class DotFormatter {
             - any double-quoted string ("...") possibly containing escaped quotes
               (\")1;
             - an HTML string (<...>).
+         
+         The HTML string handling is not implemented here.
         */
         // TODO: We are not doing the HTML string
         
@@ -79,15 +85,13 @@ public class DotFormatter {
 
         // Need to quote?
 
-        let hasInvalidCharacter = string.unicodeScalars.contains {
-            !DotFormatter.identifierCharacters.contains($0)
-        }
+        let hasInvalidCharacter = string.contains { $0.isDotIdentifier }
         
         if !hasInvalidCharacter {
             return string
         }
         
-        var quoted: String = ""
+        var quoted: String = "\""
         
         for char in string {
             if char == "\"" {
@@ -98,7 +102,9 @@ public class DotFormatter {
             }
         }
         
-        return "\"\(quoted)\""
+        quoted.append("\"")
+        
+        return quoted
     }
 
     /// Formats attributes into an attribute list. Quote identifiers if

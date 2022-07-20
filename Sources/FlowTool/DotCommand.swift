@@ -5,6 +5,8 @@
 //  Created by Stefan Urbanek on 17/07/2022.
 //
 
+import SystemPackage
+
 import Flows
 import ArgumentParser
 import Graph
@@ -70,22 +72,18 @@ extension Flows {
 //        @OptionGroup var options: Options
         @Option(name: [.long, .customShort("o")],
                 help: "Path to a DOT file where the output will be written.")
-        var output = "output.dot"
+        var output: String = "output.dot"
 
         @Argument(help: "Name of a model file (path or URL)")
         var source: String
 
         mutating func run() throws {
-            let sourceURL = coalesceURL(source)
-            let sourceString: String
 
-            sourceString = try String(contentsOf: sourceURL)
-
-            let model = Model()
-            let sourceCompiler = ModelLanguageCompiler(model: model)
+            let model: Model
             
             do {
-                try sourceCompiler.compile(source: sourceString)
+                let result = try modelFromFile(path: FilePath(source))
+                model = result.model
             }
             catch let error as ParseError {
                 // TODO: Use stderr
@@ -96,12 +94,12 @@ extension Flows {
                 for message in error.messages {
                     print("ERROR: \(message)")
                 }
+                throw ExitCode(1)
             }
             
-            let outputURL = coalesceURL(output)
-            let outputNodes = sourceCompiler.output
+            let outputPath = FilePath(output)
            
-            let exporter = DotExporter(url: outputURL,
+            let exporter = DotExporter(path: outputPath,
                                        name: name,
                                        labelAttribute: "name",
                                        style: DefaultDOTStyle)
