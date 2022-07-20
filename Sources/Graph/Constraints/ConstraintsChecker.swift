@@ -1,11 +1,9 @@
 //
-//  File.swift
+//  ConstaintChecker.swift
 //  
 //
 //  Created by Stefan Urbanek on 16/06/2022.
 //
-
-import Foundation
 
 public struct ConstraintViolation: CustomStringConvertible, CustomDebugStringConvertible {
     // TODO: Use constraint reference instead of just a name

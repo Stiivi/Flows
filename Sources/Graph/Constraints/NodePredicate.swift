@@ -1,11 +1,9 @@
 //
-//  File.swift
+//  NodePredicate.swift
 //  
 //
 //  Created by Stefan Urbanek on 17/06/2022.
 //
-
-import Foundation
 
 /// Protocol for a predicate that matches a node.
 ///

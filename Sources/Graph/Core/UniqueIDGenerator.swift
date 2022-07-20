@@ -1,11 +1,9 @@
 //
-//  File.swift
+//  UniqueIDGenerator.swift
 //  
 //
 //  Created by Stefan Urbanek on 03/01/2022.
 //
-
-import Foundation
 
 /// Protocol for generators of unique object IDs.
 ///

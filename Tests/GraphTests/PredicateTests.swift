@@ -5,8 +5,6 @@
 //  Created by Stefan Urbanek on 15/06/2022.
 //
 
-import Foundation
-
 import XCTest
 @testable import Graph
 

@@ -5,7 +5,6 @@
 //  Created by Stefan Urbanek on 01/07/2022.
 //
 
-import Foundation
 import XCTest
 @testable import Flows
 
