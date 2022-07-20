@@ -4,6 +4,7 @@ Dynamical model simulation library.
 
 A prototype.
 
+
 ## Flow Tool and Flow Language
 
 ### Tool
@@ -52,13 +53,12 @@ stock cup = 0
 # Variables
 #
 var rate = 10
-var spill = 0.1
 
 # Flows
 #
 # Pouring from the kettle to the cup at given rate, spilling some water.
 #
-flow pour = rate - (rate * spill)
+flow pour = rate
      from kettle
      to cup
 
@@ -129,6 +129,12 @@ swift build
 ```sh
 swift run flow
 ```
+
+
+## Development
+
+Read [Design Notes](DESIGN.md) for more information about how this library
+is being developed and what are the priorities.
 
 
 ## Author
