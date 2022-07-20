@@ -10,9 +10,9 @@ A prototype. A toy.
 ### Tool
 
 ```
-OVERVIEW: Flows – dynamical systems simulator
+OVERVIEW: Flow – dynamical systems simulator
 
-USAGE: flows [--steps <steps>] <source>
+USAGE: flow run [--steps <steps>] <source>
 
 ARGUMENTS:
   <source>                Name of a model file (path or URL)
@@ -25,9 +25,11 @@ OPTIONS:
 Example use:
 
 ```
-flow Models/hello.flow
-flow --steps 1000 Models/predator-prey.flow
+flow run Models/hello.flow
+flow run --steps 1000 Models/predator-prey.flow
 ```
+
+Use `flow --help` for more information and more commands.
 
 ### Language
 

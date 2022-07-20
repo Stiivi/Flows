@@ -34,7 +34,8 @@ func coalesceURL(_ source: String) -> URL {
 
 struct Flows: ParsableCommand {
     static var configuration = CommandConfiguration(
-        abstract: "Flows – dynamical systems simulator",
+        commandName: "flow",
+        abstract: "Flow – dynamical systems simulator",
         subcommands: [
             Run.self,
             WriteDOT.self,
