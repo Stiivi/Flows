@@ -1,6 +1,6 @@
 import XCTest
 @testable import Flows
-import System
+import SystemPackage
 
 final class SimulatorTests: XCTestCase {
     func testNonNegative() throws {

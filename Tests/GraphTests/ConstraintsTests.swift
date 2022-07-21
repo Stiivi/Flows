@@ -58,7 +58,7 @@ final class ConstraintsTests: XCTestCase {
         graph.add(node1)
         graph.add(node2)
 
-        let linkGood = graph.connect(from: node1, to: node2, labels: ["good"])
+        graph.connect(from: node1, to: node2, labels: ["good"])
         let linkBad = graph.connect(from: node1, to: node2, labels: ["bad"])
 
         let c1 = LinkConstraint(
