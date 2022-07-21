@@ -26,15 +26,16 @@ extension String {
             try buffer.withUnsafeMutablePointerToElements { pointer in
                 let umbp = UnsafeMutableRawBufferPointer(start: pointer, count: bufferSize)
                 count = try file.read(into: umbp)
-                
-                let string = String(bytesNoCopy: pointer,
-                                    length: count,
-                                    encoding: .utf8,
-                                    freeWhenDone: false)
-                
-                if let string = string {
-                    result += string
+               
+                let string = String(unsafeUninitializedCapacity: count) {
+                    target in
+                    for i in 0..<count {
+                        target[i] = umbp[i]
+                    }
+                    return count
                 }
+                
+                result += string
             }
         } while count > 0
         

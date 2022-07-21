@@ -5,7 +5,11 @@
 //  Created by Stefan Urbanek on 12/07/2022.
 //
 
+#if os(Linux)
+import Glibc
+#else
 import Darwin
+#endif
 
 // Mark: Builtins
 
