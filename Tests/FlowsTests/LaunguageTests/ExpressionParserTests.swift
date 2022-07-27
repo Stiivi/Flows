@@ -121,4 +121,14 @@ final class ExpressionParserTests: XCTestCase {
             XCTAssertEqual($0 as! SyntaxError, SyntaxError.unexpectedToken)
         }
     }
+    
+    func testFullText() throws {
+        let text = "-( a  + b ) * f( c, d, 100_000\n)"
+        let parser = ExpressionParser(string: text)
+        guard let result = try parser.expression() else {
+            XCTFail("Expected valid expression to be parsed")
+            return
+        }
+        XCTAssertEqual(text, result.fullText)
+    }
 }

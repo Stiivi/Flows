@@ -57,16 +57,40 @@ class ModelParser: ExpressionParser {
     }
 
     func stock() throws -> ModelAST? {
+        var tokens: [Token] = []
+        let options: [String]
+        
+        if let lparen = accept(.leftParen) {
+            tokens.append(lparen)
+            
+            guard let option = identifier() else {
+                throw SyntaxError.identifierExpected
+            }
+            tokens.append(option)
+            guard let rparen = accept(.rightParen) else {
+                throw SyntaxError.missingRightParenthesis
+            }
+            tokens.append(rparen)
+            options = [option.text]
+        }
+        else {
+            options = []
+        }
+        
         guard let name = identifier() else {
             throw SyntaxError.identifierExpected
         }
-        guard accept(.assignment) != nil else {
+        tokens.append(name)
+        guard let assignment = accept(.assignment) else {
             throw SyntaxError.assignmentExpected
         }
+        tokens.append(assignment)
         guard let expression = try self.expression() else {
             throw SyntaxError.expressionExpected
         }
-        return .stock(name, expression)
+        tokens += expression.tokens
+        return ModelAST(.stock(name.text, options, expression),
+                        tokens: tokens)
     }
     
     func variable() throws -> ModelAST? {
@@ -79,7 +103,9 @@ class ModelParser: ExpressionParser {
         guard let expression = try self.expression() else {
             throw SyntaxError.expressionExpected
         }
-        return .variable(name, expression)
+        // FIXME: Assign tokens
+        return ModelAST(.variable(name.text, expression),
+                        tokens: [])
     }
 
     func flow() throws -> ModelAST? {
@@ -115,7 +141,10 @@ class ModelParser: ExpressionParser {
             fillsName = nil
         }
         
-        return .flow(name, expression, drainsName, fillsName)
+        // FIXME: Assign tokens
+        return ModelAST(.flow(name.text, expression,
+                              drainsName?.text, fillsName?.text),
+                        tokens: [])
     }
     func output() throws -> ModelAST? {
         var items: [Token] = []
@@ -133,7 +162,9 @@ class ModelParser: ExpressionParser {
             items.append(item)
         }
 
-        return .output(items)
+        // FIXME: Assign tokens
+        return ModelAST(.output(items.map { $0.text }),
+                        tokens: [])
     }
 
     public func statement() throws -> ModelAST? {
@@ -168,7 +199,7 @@ class ModelParser: ExpressionParser {
         return list
     }
     
-    public func parseModel() throws -> ModelAST {
+    public func parseModel() throws -> [ModelAST] {
         let statements: [ModelAST]
         do {
             statements = try self.statements() ?? []
@@ -188,7 +219,7 @@ class ModelParser: ExpressionParser {
             throw ParseError.syntaxError(.unexpectedToken, lastToken)
         }
 
-        return .model(statements)
+        return statements
     }
     
 }

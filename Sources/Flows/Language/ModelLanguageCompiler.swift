@@ -29,64 +29,67 @@ public class ModelLanguageCompiler {
     public func compile(source: String) throws {
         let parser = ModelParser(string: source)
         
-        let ast = try parser.parseModel()
-        
-        if case let .model(statements) = ast {
-            try compile(statements: statements)
-        }
-        else {
-            fatalError("Parser did not return a model")
-        }
+        let statements = try parser.parseModel()
+        try compile(statements: statements)
     }
 
-    func compile(stock: Token, expression: ExpressionAST) {
-        let name = stock.text
-        
+    func compile(stock name: String, options: [String], expression: ExpressionAST) {
         // TODO: We are de-compiling here, since ExpressionNode has to way to provide expression directly (for reasons)
-        let node = Stock(name: name, expression: expression.text)
+        let node = Stock(name: name, expression: expression.fullText)
         model.add(node)
         
-        let variables = Set(expression.variables.map { $0.text })
+        // FIXME: We have only one possible option now
+        
+        if options.count > 0 {
+            let option = options[0]
+            if option == "allowsnegative" {
+                node.allowsNegative = true
+            }
+            else if option == "positive" {
+                node.allowsNegative = false
+            }
+            else {
+                print("ERROR: Unknown option: \(option)")
+            }
+        }
+        
+        let variables = Set(expression.variables)
         parameterLinks += variables.map { (node, $0) }
     }
-    func compile(variable: Token, expression: ExpressionAST) {
-        let name = variable.text
-        
+    func compile(variable name: String, expression: ExpressionAST) {
         // TODO: We are de-compiling here, since ExpressionNode has to way to provide expression directly (for reasons)
-        let node = Transform(name: name, expression: expression.text)
+        let node = Transform(name: name, expression: expression.fullText)
         model.add(node)
 
-        let variables = Set(expression.variables.map { $0.text })
+        let variables = Set(expression.variables)
         parameterLinks += variables.map { (node, $0) }
     }
-    func compile(flow: Token, expression: ExpressionAST, drains: Token?, fills: Token?) {
-        let name = flow.text
-        
+    func compile(flow name: String, expression: ExpressionAST, drains: String?, fills: String?) {
         // TODO: We are de-compiling here, since ExpressionNode has to way to provide expression directly (for reasons)
-        let node = Flow(name: name, expression: expression.text)
+        let node = Flow(name: name, expression: expression.fullText)
         model.add(node)
-        if let name = drains?.text {
-            drainLinks.append((node, name))
+        if let drains = drains {
+            drainLinks.append((node, drains))
         }
-        if let name = fills?.text {
-            fillLinks.append((node, name))
+        if let fills = fills {
+            fillLinks.append((node, fills))
         }
 
-        let variables = Set(expression.variables.map { $0.text })
+        let variables = Set(expression.variables)
         parameterLinks += variables.map { (node, $0) }
     }
     
-    func compile(output tokens: [Token]) {
-        output = tokens.map { $0.text }
+    func compile(output names: [String]) {
+        output = names
     }
 
     func compile(statements: [ModelAST]) throws {
         var errors: [String] = []
 
         for statement in statements {
-            switch statement {
-            case let .stock(name, expression):
-                compile(stock: name, expression: expression)
+            switch statement.kind {
+            case let .stock(name, options, expression):
+                compile(stock: name, options: options, expression: expression)
             case let .variable(name, expression):
                 compile(variable: name, expression: expression)
             case let .flow(name, expression, drains, fills):

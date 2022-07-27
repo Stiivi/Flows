@@ -8,19 +8,20 @@
 import XCTest
 @testable import Flows
 
+// TODO: Test stock options
 
 final class ModelParserTests: XCTestCase {
     func testEmpty() throws {
         let parser = ModelParser(string: "")
-        let ast = try parser.parseModel()
-        XCTAssertTrue(ast.statements.isEmpty)
+        let statements = try parser.parseModel()
+        XCTAssertTrue(statements.isEmpty)
     }
     
     func testEmptyComment() throws {
         // TODO: Move this to lexer tests
         let parser = ModelParser(string: "# This is a comment\n")
-        let ast = try parser.parseModel()
-        XCTAssertTrue(ast.statements.isEmpty)
+        let statements = try parser.parseModel()
+        XCTAssertTrue(statements.isEmpty)
     }
     
     func testExpressionWithComment() throws {
@@ -29,16 +30,16 @@ final class ModelParserTests: XCTestCase {
                                          # A comment
                                          stock x = 10  # Trailing comment
                                          """)
-        let ast = try parser.parseModel()
-        XCTAssertEqual(ast.statements.count, 1)
+        let statements = try parser.parseModel()
+        XCTAssertEqual(statements.count, 1)
         
-        guard let stmt = ast.statements.first else {
+        guard let stmt = statements.first else {
             XCTFail()
             return
         }
         
-        if case let .stock(token, _) = stmt {
-            XCTAssertEqual(token.text, "x")
+        if case let .stock(token, _, _) = stmt.kind {
+            XCTAssertEqual(token, "x")
         }
     }
     func testExpressionWithMultipleComment() throws {
@@ -50,93 +51,93 @@ final class ModelParserTests: XCTestCase {
                                          
                                          stock x = 10
                                          """)
-        let ast = try parser.parseModel()
-        XCTAssertEqual(ast.statements.count, 1)
+        let statements = try parser.parseModel()
+        XCTAssertEqual(statements.count, 1)
         
-        guard let stmt = ast.statements.first else {
+        guard let stmt = statements.first else {
             XCTFail()
             return
         }
         
-        if case let .stock(token, _) = stmt {
-            XCTAssertEqual(token.text, "x")
+        if case let .stock(token, _, _) = stmt.kind {
+            XCTAssertEqual(token, "x")
         }
     }
     func testStock() throws {
         let parser = ModelParser(string: "stock x = 10")
-        let ast = try parser.parseModel()
-        XCTAssertEqual(ast.statements.count, 1)
+        let statements = try parser.parseModel()
+        XCTAssertEqual(statements.count, 1)
         
-        guard let stmt = ast.statements.first else {
+        guard let stmt = statements.first else {
             XCTFail()
             return
         }
         
-        if case let .stock(token, _) = stmt {
-            XCTAssertEqual(token.text, "x")
+        if case let .stock(token, _, _) = stmt.kind {
+            XCTAssertEqual(token, "x")
         }
     }
 
     func testVar() throws {
         let parser = ModelParser(string: "var x = 10")
-        let ast = try parser.parseModel()
-        XCTAssertEqual(ast.statements.count, 1)
+        let statements = try parser.parseModel()
+        XCTAssertEqual(statements.count, 1)
         
-        guard let stmt = ast.statements.first else {
+        guard let stmt = statements.first else {
             XCTFail()
             return
         }
         
-        if case let .variable(token, _) = stmt {
-            XCTAssertEqual(token.text, "x")
+        if case let .variable(token, _) = stmt.kind {
+            XCTAssertEqual(token, "x")
         }
     }
     func testOutput() throws {
         let parser = ModelParser(string: "output a, b, c")
-        let ast = try parser.parseModel()
-        XCTAssertEqual(ast.statements.count, 1)
+        let statements = try parser.parseModel()
+        XCTAssertEqual(statements.count, 1)
         
-        guard let stmt = ast.statements.first else {
+        guard let stmt = statements.first else {
             XCTFail()
             return
         }
         
-        if case let .output(tokens) = stmt {
+        if case let .output(tokens) = stmt.kind {
             XCTAssertEqual(tokens.count, 3)
-            XCTAssertEqual(tokens.map { $0.text }, ["a", "b", "c"])
+            XCTAssertEqual(tokens, ["a", "b", "c"])
         }
     }
     func testFlow() throws {
         let parser = ModelParser(string: "flow f = 10 from drains to fills")
-        let ast = try parser.parseModel()
-        XCTAssertEqual(ast.statements.count, 1)
+        let statements = try parser.parseModel()
+        XCTAssertEqual(statements.count, 1)
         
-        guard let stmt = ast.statements.first else {
+        guard let stmt = statements.first else {
             XCTFail()
             return
         }
         
-        if case let .flow(token, _, drains, fills) = stmt {
-            XCTAssertEqual(token.text, "f")
-            XCTAssertEqual(drains?.text, "drains")
-            XCTAssertEqual(fills?.text, "fills")
+        if case let .flow(token, _, drains, fills) = stmt.kind {
+            XCTAssertEqual(token, "f")
+            XCTAssertEqual(drains, "drains")
+            XCTAssertEqual(fills, "fills")
         }
     }
     
     func testCaseInsensitiveKeywords() throws {
         let parser = ModelParser(string: "FLOW f = 10 FROM drains TO fills")
-        let ast = try parser.parseModel()
-        XCTAssertEqual(ast.statements.count, 1)
+        let statements = try parser.parseModel()
+        XCTAssertEqual(statements.count, 1)
         
-        guard let stmt = ast.statements.first else {
+        guard let stmt = statements.first else {
             XCTFail()
             return
         }
         
-        if case let .flow(token, _, drains, fills) = stmt {
-            XCTAssertEqual(token.text, "f")
-            XCTAssertEqual(drains?.text, "drains")
-            XCTAssertEqual(fills?.text, "fills")
+        if case let .flow(token, _, drains, fills) = stmt.kind {
+            XCTAssertEqual(token, "f")
+            XCTAssertEqual(drains, "drains")
+            XCTAssertEqual(fills, "fills")
         }
         
     }
