@@ -27,6 +27,30 @@ final class ExpressionParserTests: XCTestCase {
         XCTAssertEqual(try ExpressionParser(string: "a+1").parse(), expr)
     }
     
+    func testFactorAndTermRepetition() {
+        let expr = Expression.binary(
+            "*",
+            .binary(
+                "*",
+                .variable("a"),
+                .variable("b")
+            ),
+            .variable("c")
+        )
+        XCTAssertEqual(try ExpressionParser(string: "a * b * c").parse(), expr)
+
+        let expr2 = Expression.binary(
+            "+",
+            .binary(
+                "+",
+                .variable("a"),
+                .variable("b")
+            ),
+            .variable("c")
+        )
+        XCTAssertEqual(try ExpressionParser(string: "a + b + c").parse(), expr2)
+    }
+    
     func testPrecedence() {
         let expr = Expression.binary(
             "+",

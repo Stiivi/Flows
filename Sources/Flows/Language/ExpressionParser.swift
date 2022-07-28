@@ -186,7 +186,7 @@ public class ExpressionParser {
     //
 
     func factor() throws -> ExpressionAST? {
-        guard let left = try unary() else {
+        guard var left = try unary() else {
             return nil
         }
         
@@ -194,7 +194,7 @@ public class ExpressionParser {
             guard let right = try unary() else {
                 throw SyntaxError.expressionExpected
             }
-            return ExpressionAST(.binary(op.text, left, right),
+            left = ExpressionAST(.binary(op.text, left, right),
                                  tokens: left.tokens + [op] + right.tokens)
         }
         
@@ -204,7 +204,7 @@ public class ExpressionParser {
     // term -> factor ( ( "-" | "+" ) factor )* ;
     //
     func term() throws -> ExpressionAST? {
-        guard let left = try factor() else {
+        guard var left = try factor() else {
             return nil
         }
         
@@ -212,7 +212,7 @@ public class ExpressionParser {
             guard let right = try factor() else {
                 throw SyntaxError.expressionExpected
             }
-            return ExpressionAST(.binary(op.text, left, right),
+            left = ExpressionAST(.binary(op.text, left, right),
                                  tokens: left.tokens + [op] + right.tokens)
         }
         
